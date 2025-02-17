@@ -1,5 +1,23 @@
 import * as core from "@actions/core";
-import { wait } from "./wait.js";
+import { Options } from "./option.js";
+
+const getOptions = () => {
+  return new Options(
+    core.getBooleanInput("debug"),
+    core.getBooleanInput("disable_review"),
+    core.getBooleanInput("disable_release_notes"),
+    core.getInput("max_files"),
+    core.getBooleanInput("review_simple_changes"),
+    core.getBooleanInput("review_comment_lgtm"),
+    core.getMultilineInput("path_filters"),
+    core.getInput("system_message"),
+    core.getInput("model"),
+    core.getInput("retries"),
+    core.getInput("timeout_ms"),
+    core.getInput("base_url"),
+    core.getInput("language"),
+  );
+};
 
 /**
  * The main function for the action.
@@ -8,20 +26,12 @@ import { wait } from "./wait.js";
  */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput("milliseconds");
-
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`);
-
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString());
-    await wait(Number.parseInt(ms, 10));
-    core.debug(new Date().toTimeString());
-
-    // Set outputs for other workflow steps to use
-    core.setOutput("time", new Date().toTimeString());
+    const options = getOptions();
+    options.print();
   } catch (error) {
     // Fail the workflow run if an error occurs
-    if (error instanceof Error) core.setFailed(error.message);
+    if (error instanceof Error) {
+      core.setFailed(error.message);
+    }
   }
 }
