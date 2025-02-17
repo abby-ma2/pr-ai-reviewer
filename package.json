@@ -37,9 +37,12 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^1.11.1",
+    "@google/generative-ai": "^0.21.0",
+    "openai": "^4.85.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@eslint/compat": "^1.2.6",
     "@github/local-action": "^2.6.1",
     "@jest/globals": "^29.7.0",
