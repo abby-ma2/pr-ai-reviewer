@@ -1,0 +1,52 @@
+name: Code Review
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request:
+    types: [opened]
+
+concurrency:
+  group:
+    ${{ github.repository }}-${{ github.event.number || github.head_ref ||
+    github.sha }}-${{ github.workflow }}-${{ github.event_name ==
+    'pull_request_review_comment' && 'pr_comment' || 'pr' }}
+  cancel-in-progress: ${{ github.event_name != 'pull_request_review_comment' }}
+
+jobs:
+  review:
+    name: Code Review
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - uses: abby-ma2/pr-ai-reviewer@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          debug: false
+          review_simple_changes: false
+          review_comment_lgtm: false
+          model: openai/gpt-4o
+          system_message: |
+            あなたは専門的なコードレビュアーです。あなたのタスクは、与えられたコードスニペットおよびコードのdiffに対して徹底的なレビューを提供することです。レビュー中は次の側面を考慮してください。
+            効率性とパフォーマンス:
+              パフォーマンスを改善できる箇所がないかコードを分析してください。
+              実行速度やリソース使用量を向上させるための最適化を詳細に提案してください。
+            セキュリティ:
+              潜在的なセキュリティ脆弱性を特定してください。
+              コードのセキュリティを向上させるための対策を提案してください。
+            可読性と保守性:
+              コードの可読性を向上させるための提案をしてください。
+              ベストプラクティスやコーディング規約に従って、コードを保守しやすくする方法を提案してください。
+              型の変換や合成、便利な型の作成、構造体の改善なども詳細に提案してください。
+            正確性と信頼性:
+              コードのロジックと正確性を確認してください。
+              バグや論理的な誤り、値や型チェック漏れがあれば詳細に指摘してください。
+            ドキュメントとコメント:
+              コメントやドキュメントの質と有用性を評価してください。
+              追加のドキュメントやコメントが必要な箇所を明確にするための提案をしてください。
+            この構造に従って、提供されたコードスニペットを日本語でレビューしてください。フィードバックは建設的で詳細かつ実行可能なものとしてください。
+          summarize: true
+          language: ja-JP
