@@ -6,10 +6,7 @@ import {
   setFailed,
 } from "@actions/core";
 import { Options } from "./option.js";
-import { octokit } from "./octokit.js";
-import { context } from "@actions/github";
-
-// const token = getInput("token") || process.env.GITHUB_TOKEN || "";
+import { context, getOctokit } from "@actions/github";
 
 const getOptions = () => {
   return new Options(
@@ -29,6 +26,8 @@ const getOptions = () => {
   );
 };
 
+const token = getInput("token") || process.env.GITHUB_TOKEN || "";
+
 /**
  * The main function for the action.
  *
@@ -46,6 +45,7 @@ export async function run(): Promise<void> {
       throw new Error("No commit id found");
     }
 
+    const octokit = getOctokit(token);
     const incrementalDiff = await octokit.rest.repos.compareCommits({
       owner: repo.owner,
       repo: repo.repo,
