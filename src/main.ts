@@ -52,7 +52,7 @@ export async function run(): Promise<void> {
       base: commitId,
       head: pull_request.head.sha,
     });
-    info(`Incremental diff: ${incrementalDiff} files changed`);
+
     incrementalDiff.data.files?.map((file) => {
       info(`file: ${file.filename}`);
       info(`status: ${file.status}`);
@@ -65,7 +65,27 @@ export async function run(): Promise<void> {
       info(`deletions: ${file.deletions}`);
       info(`changes: ${file.changes}`);
     });
- 
+    
+    const targetBranchDiff = await octokit.rest.repos.compareCommits({
+      owner: repo.owner,
+      repo: repo.repo,
+      base: pull_request.base.sha,
+      head: pull_request.head.sha
+    })
+
+    targetBranchDiff.data.files?.map((file) => {
+      info(`file: ${file.filename}`);
+      info(`status: ${file.status}`);
+      info(`patch: ${file.patch}`);
+      info(`sha: ${file.sha}`);
+      info(`raw_url: ${file.raw_url}`);
+      info(`blob_url: ${file.blob_url}`);
+      info(`contents_url: ${file.contents_url}`);
+      info(`additions: ${file.additions}`);
+      info(`deletions: ${file.deletions}`);
+      info(`changes: ${file.changes}`);
+    });
+
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) {
