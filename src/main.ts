@@ -52,7 +52,7 @@ export async function run(): Promise<void> {
       base: commitId,
       head: pull_request.head.sha,
     });
-    info(`Incremental diff: ${incrementalDiff} files changed`);
+
     incrementalDiff.data.files?.map((file) => {
       info(`file: ${file.filename}`);
       info(`status: ${file.status}`);
@@ -66,6 +66,7 @@ export async function run(): Promise<void> {
       info(`changes: ${file.changes}`);
     });
  
+    info(`incremental diff: ${incrementalDiff} files changed`);
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) {
