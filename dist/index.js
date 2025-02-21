@@ -33982,7 +33982,36 @@ async function run() {
             base: commitId,
             head: pull_request.head.sha,
         });
-        coreExports.info(`Incremental diff: ${incrementalDiff} files changed`);
+        incrementalDiff.data.files?.map((file) => {
+            coreExports.info(`file: ${file.filename}`);
+            coreExports.info(`status: ${file.status}`);
+            coreExports.info(`patch: ${file.patch}`);
+            coreExports.info(`sha: ${file.sha}`);
+            coreExports.info(`raw_url: ${file.raw_url}`);
+            coreExports.info(`blob_url: ${file.blob_url}`);
+            coreExports.info(`contents_url: ${file.contents_url}`);
+            coreExports.info(`additions: ${file.additions}`);
+            coreExports.info(`deletions: ${file.deletions}`);
+            coreExports.info(`changes: ${file.changes}`);
+        });
+        const targetBranchDiff = await octokit.rest.repos.compareCommits({
+            owner: repo.owner,
+            repo: repo.repo,
+            base: pull_request.base.sha,
+            head: pull_request.head.sha,
+        });
+        targetBranchDiff.data.files?.map((file) => {
+            coreExports.info(`file: ${file.filename}`);
+            coreExports.info(`status: ${file.status}`);
+            coreExports.info(`patch: ${file.patch}`);
+            coreExports.info(`sha: ${file.sha}`);
+            coreExports.info(`raw_url: ${file.raw_url}`);
+            coreExports.info(`blob_url: ${file.blob_url}`);
+            coreExports.info(`contents_url: ${file.contents_url}`);
+            coreExports.info(`additions: ${file.additions}`);
+            coreExports.info(`deletions: ${file.deletions}`);
+            coreExports.info(`changes: ${file.changes}`);
+        });
     }
     catch (error) {
         // Fail the workflow run if an error occurs
