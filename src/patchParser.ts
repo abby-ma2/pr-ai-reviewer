@@ -1,18 +1,24 @@
-export interface CodeSection {
+export type CodeSection = {
+  filename: string;
   startLine: number;
   lineCount: number;
   branch?: string;
   commitId?: string;
   content: string[];
-}
+};
 
-export interface PatchParseResult {
+export type PatchParseResult = {
   original: CodeSection;
   modified: CodeSection;
-}
+};
 
-export function parsePatch(patch: string): PatchParseResult[] {
-  const results: PatchParseResult[] = [];
+export const parsePatch = ({
+  filename,
+  patch,
+}: {
+  filename: string;
+  patch: string;
+}) => {
   const lines = patch.split("\n");
   let i = 0;
   while (i < lines.length) {
@@ -85,8 +91,9 @@ export function parsePatch(patch: string): PatchParseResult[] {
         // 衝突マーカー以外はスキップ
         i++;
       }
-      results.push({
+      return {
         original: {
+          filename,
           startLine: origStart,
           lineCount: origCount,
           branch: origBranch,
@@ -94,16 +101,15 @@ export function parsePatch(patch: string): PatchParseResult[] {
           content: origContent,
         },
         modified: {
+          filename,
           startLine: modStart,
           lineCount: modCount,
           branch: modBranch,
           commitId: modCommitId,
           content: modContent,
         },
-      });
-    } else {
-      i++;
+      };
     }
+    i++;
   }
-  return results;
-}
+};
