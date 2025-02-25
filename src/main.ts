@@ -5,8 +5,8 @@ import {
   info,
   setFailed,
 } from "@actions/core";
-import { Options } from "./option.js";
 import { context, getOctokit } from "@actions/github";
+import { Options } from "./option.js";
 
 const getOptions = () => {
   return new Options(

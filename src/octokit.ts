@@ -1,5 +1,5 @@
 import { getInput } from "@actions/core";
-import { getOctokitOptions, GitHub } from "@actions/github/lib/utils.js";
+import { GitHub, getOctokitOptions } from "@actions/github/lib/utils.js";
 import { retry } from "@octokit/plugin-retry";
 import { throttling } from "@octokit/plugin-throttling";
 
