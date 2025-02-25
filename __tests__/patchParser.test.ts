@@ -17,6 +17,7 @@ describe("parsePatch", () => {
     const result = parsePatch({ filename: "filename", patch });
     expect(result).toBeDefined();
     expect(result?.original).toEqual({
+      filename: "filename",
       startLine: 85,
       lineCount: 6,
       branch: "HEAD",
@@ -32,6 +33,7 @@ describe("parsePatch", () => {
       ], // 変更前コードは空
     });
     expect(result?.modified).toEqual({
+      filename: "filename",
       startLine: 85,
       lineCount: 10,
       branch: "wip",

@@ -7,6 +7,7 @@ import {
 } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import { Options } from "./option.js";
+import { parsePatch } from "./patchParser.js";
 
 const getOptions = () => {
   return new Options(
@@ -46,25 +47,6 @@ export async function run(): Promise<void> {
     }
 
     const octokit = getOctokit(token);
-    const incrementalDiff = await octokit.rest.repos.compareCommits({
-      owner: repo.owner,
-      repo: repo.repo,
-      base: commitId,
-      head: pull_request.head.sha,
-    });
-
-    incrementalDiff.data.files?.map((file) => {
-      info(`file: ${file.filename}`);
-      info(`status: ${file.status}`);
-      info(`patch: ${file.patch}`);
-      info(`sha: ${file.sha}`);
-      info(`raw_url: ${file.raw_url}`);
-      info(`blob_url: ${file.blob_url}`);
-      info(`contents_url: ${file.contents_url}`);
-      info(`additions: ${file.additions}`);
-      info(`deletions: ${file.deletions}`);
-      info(`changes: ${file.changes}`);
-    });
 
     const targetBranchDiff = await octokit.rest.repos.compareCommits({
       owner: repo.owner,
@@ -74,16 +56,24 @@ export async function run(): Promise<void> {
     });
 
     targetBranchDiff.data.files?.map((file) => {
-      info(`file: ${file.filename}`);
-      info(`status: ${file.status}`);
-      info(`patch: ${file.patch}`);
-      info(`sha: ${file.sha}`);
-      info(`raw_url: ${file.raw_url}`);
-      info(`blob_url: ${file.blob_url}`);
-      info(`contents_url: ${file.contents_url}`);
-      info(`additions: ${file.additions}`);
-      info(`deletions: ${file.deletions}`);
-      info(`changes: ${file.changes}`);
+      const result = parsePatch({ filename: file.filename, patch: file.patch });
+      if (!result) {
+        return;
+      }
+
+      const modifiedFile = {
+        filename: file.filename,
+        sha: file.sha,
+        status: file.status,
+        additions: file.additions,
+        deletions: file.deletions,
+        changes: file.changes,
+        rawUrl: file.raw_url,
+        url: file.contents_url,
+        original: result.original,
+        modified: result.modified,
+      };
+      info(JSON.stringify(modifiedFile, null, 2));
     });
   } catch (error) {
     // Fail the workflow run if an error occurs

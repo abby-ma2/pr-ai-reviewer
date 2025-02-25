@@ -17,8 +17,11 @@ export const parsePatch = ({
   patch,
 }: {
   filename: string;
-  patch: string;
+  patch?: string;
 }) => {
+  if (!patch) {
+    return;
+  }
   const lines = patch.split("\n");
   let i = 0;
   while (i < lines.length) {
