@@ -90,8 +90,13 @@ export const parsePatch = ({
 
           continue; // 衝突部分解析済みなのでチャンク終了
         }
-        origContent.push(currentLine);
-        modContent.push(currentLine);
+        if (currentLine.startsWith("+")) {
+          const markerLine = currentLine.replace(/^\+*/, " ");
+          modContent.push(markerLine);
+        } else {
+          origContent.push(currentLine);
+          modContent.push(currentLine);
+        }
 
         // 衝突マーカー以外はスキップ
         i++;
