@@ -56,6 +56,8 @@ export async function run(): Promise<void> {
     });
 
     targetBranchDiff.data.files?.map((file) => {
+      info(`${file.patch}`);
+
       const results = parsePatch({
         filename: file.filename,
         patch: file.patch,

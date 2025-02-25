@@ -34074,6 +34074,7 @@ async function run() {
             head: pull_request.head.sha,
         });
         targetBranchDiff.data.files?.map((file) => {
+            coreExports.info(`${file.patch}`);
             const results = parsePatch({
                 filename: file.filename,
                 patch: file.patch,
