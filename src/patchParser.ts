@@ -19,9 +19,11 @@ export const parsePatch = ({
   filename: string;
   patch?: string;
 }) => {
+  const results: PatchParseResult[] = [];
   if (!patch) {
-    return;
+    return results;
   }
+
   const lines = patch.split("\n");
   let i = 0;
   while (i < lines.length) {
@@ -94,7 +96,7 @@ export const parsePatch = ({
         // 衝突マーカー以外はスキップ
         i++;
       }
-      return {
+      results.push({
         original: {
           filename,
           startLine: origStart,
@@ -111,8 +113,9 @@ export const parsePatch = ({
           commitId: modCommitId,
           content: modContent,
         },
-      };
+      });
     }
     i++;
   }
+  return results;
 };

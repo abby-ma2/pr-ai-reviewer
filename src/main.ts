@@ -56,25 +56,26 @@ export async function run(): Promise<void> {
     });
 
     targetBranchDiff.data.files?.map((file) => {
-      info(`filename: ${file.filename} {patch: ${file.patch}}`);
-      const result = parsePatch({ filename: file.filename, patch: file.patch });
-      if (!result) {
-        return;
-      }
-
-      const modifiedFile = {
+      const results = parsePatch({
         filename: file.filename,
-        sha: file.sha,
-        status: file.status,
-        additions: file.additions,
-        deletions: file.deletions,
-        changes: file.changes,
-        rawUrl: file.raw_url,
-        url: file.contents_url,
-        original: result.original,
-        modified: result.modified,
-      };
-      info(JSON.stringify(modifiedFile, null, 2));
+        patch: file.patch,
+      });
+
+      for (const result of results) {
+        const modifiedFile = {
+          filename: file.filename,
+          sha: file.sha,
+          status: file.status,
+          additions: file.additions,
+          deletions: file.deletions,
+          changes: file.changes,
+          rawUrl: file.raw_url,
+          url: file.contents_url,
+          original: result.original,
+          modified: result.modified,
+        };
+        info(JSON.stringify(modifiedFile, null, 2));
+      }
     });
   } catch (error) {
     // Fail the workflow run if an error occurs

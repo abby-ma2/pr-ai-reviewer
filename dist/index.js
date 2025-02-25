@@ -33957,8 +33957,9 @@ class PathFilter {
 }
 
 const parsePatch = ({ filename, patch, }) => {
+    const results = [];
     if (!patch) {
-        return;
+        return results;
     }
     const lines = patch.split("\n");
     let i = 0;
@@ -34022,7 +34023,7 @@ const parsePatch = ({ filename, patch, }) => {
                 // 衝突マーカー以外はスキップ
                 i++;
             }
-            return {
+            results.push({
                 original: {
                     filename,
                     startLine: origStart,
@@ -34039,10 +34040,11 @@ const parsePatch = ({ filename, patch, }) => {
                     commitId: modCommitId,
                     content: modContent,
                 },
-            };
+            });
         }
         i++;
     }
+    return results;
 };
 
 const getOptions = () => {
@@ -34072,24 +34074,25 @@ async function run() {
             head: pull_request.head.sha,
         });
         targetBranchDiff.data.files?.map((file) => {
-            coreExports.info(`filename: ${file.filename} {patch: ${file.patch}}`);
-            const result = parsePatch({ filename: file.filename, patch: file.patch });
-            if (!result) {
-                return;
-            }
-            const modifiedFile = {
+            const results = parsePatch({
                 filename: file.filename,
-                sha: file.sha,
-                status: file.status,
-                additions: file.additions,
-                deletions: file.deletions,
-                changes: file.changes,
-                rawUrl: file.raw_url,
-                url: file.contents_url,
-                original: result.original,
-                modified: result.modified,
-            };
-            coreExports.info(JSON.stringify(modifiedFile, null, 2));
+                patch: file.patch,
+            });
+            for (const result of results) {
+                const modifiedFile = {
+                    filename: file.filename,
+                    sha: file.sha,
+                    status: file.status,
+                    additions: file.additions,
+                    deletions: file.deletions,
+                    changes: file.changes,
+                    rawUrl: file.raw_url,
+                    url: file.contents_url,
+                    original: result.original,
+                    modified: result.modified,
+                };
+                coreExports.info(JSON.stringify(modifiedFile, null, 2));
+            }
         });
     }
     catch (error) {

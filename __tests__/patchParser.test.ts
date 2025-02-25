@@ -14,9 +14,9 @@ describe("parsePatch", () => {
      // Fail the workflow run if an error occurs
      if (error instanceof Error) {`;
 
-    const result = parsePatch({ filename: "filename", patch });
-    expect(result).toBeDefined();
-    expect(result?.original).toEqual({
+    const results = parsePatch({ filename: "filename", patch });
+
+    expect(results[0].original).toEqual({
       filename: "filename",
       startLine: 85,
       lineCount: 6,
@@ -32,7 +32,7 @@ describe("parsePatch", () => {
         "     if (error instanceof Error) {",
       ], // 変更前コードは空
     });
-    expect(result?.modified).toEqual({
+    expect(results[0].modified).toEqual({
       filename: "filename",
       startLine: 85,
       lineCount: 10,
