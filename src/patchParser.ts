@@ -28,8 +28,9 @@ export const parsePatch = ({
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
+
     if (line.startsWith("@@")) {
-      // パッチチャンクヘッダーの解析
+      // parse chunk header
       const headerMatch = line.match(/@@ -(\d+),(\d+) \+(\d+),(\d+) @@ (.+)/);
       if (!headerMatch) {
         i++;
@@ -49,7 +50,7 @@ export const parsePatch = ({
       let modBranch: string | undefined = undefined;
       let modCommitId: string | undefined = undefined;
       i++;
-      // チャンク内の行を読み進める
+
       while (i < lines.length && !lines[i].startsWith("@@")) {
         const currentLine = lines[i];
 
@@ -93,14 +94,17 @@ export const parsePatch = ({
         if (currentLine.startsWith("+")) {
           const markerLine = currentLine.replace(/^\+*/, " ");
           modContent.push(markerLine);
+        } else if (currentLine.startsWith("-")) {
+          const markerLine = currentLine.replace(/^-*/, " ");
+          origContent.push(markerLine);
         } else {
           origContent.push(currentLine);
           modContent.push(currentLine);
         }
 
-        // 衝突マーカー以外はスキップ
         i++;
       }
+
       results.push({
         original: {
           filename,
@@ -120,7 +124,6 @@ export const parsePatch = ({
         },
       });
     }
-    i++;
   }
   return results;
 };

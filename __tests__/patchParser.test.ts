@@ -23,7 +23,7 @@ describe("parsePatch", () => {
        setFailed(error.message);`;
 
     const results = parsePatch({ filename: "filename", patch });
-    console.log(JSON.stringify(results, null, 2));
+
     expect(results[0].original).toEqual({
       filename: "filename",
       startLine: 2,

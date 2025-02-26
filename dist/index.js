@@ -33966,7 +33966,7 @@ const parsePatch = ({ filename, patch, }) => {
     while (i < lines.length) {
         const line = lines[i];
         if (line.startsWith("@@")) {
-            // パッチチャンクヘッダーの解析
+            // parse chunk header
             const headerMatch = line.match(/@@ -(\d+),(\d+) \+(\d+),(\d+) @@ (.+)/);
             if (!headerMatch) {
                 i++;
@@ -33983,7 +33983,6 @@ const parsePatch = ({ filename, patch, }) => {
             let modBranch = undefined;
             let modCommitId = undefined;
             i++;
-            // チャンク内の行を読み進める
             while (i < lines.length && !lines[i].startsWith("@@")) {
                 const currentLine = lines[i];
                 if (currentLine.includes("<<<<<<<")) {
@@ -34018,9 +34017,18 @@ const parsePatch = ({ filename, patch, }) => {
                     }
                     continue; // 衝突部分解析済みなのでチャンク終了
                 }
-                origContent.push(currentLine);
-                modContent.push(currentLine);
-                // 衝突マーカー以外はスキップ
+                if (currentLine.startsWith("+")) {
+                    const markerLine = currentLine.replace(/^\+*/, " ");
+                    modContent.push(markerLine);
+                }
+                else if (currentLine.startsWith("-")) {
+                    const markerLine = currentLine.replace(/^-*/, " ");
+                    origContent.push(markerLine);
+                }
+                else {
+                    origContent.push(currentLine);
+                    modContent.push(currentLine);
+                }
                 i++;
             }
             results.push({
@@ -34042,7 +34050,6 @@ const parsePatch = ({ filename, patch, }) => {
                 },
             });
         }
-        i++;
     }
     return results;
 };
