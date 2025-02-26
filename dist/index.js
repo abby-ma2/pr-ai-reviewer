@@ -34097,6 +34097,20 @@ const parsePatch = ({ filename, patch, }) => {
     return results;
 };
 
+class Prompts {
+    options;
+    constructor(options) {
+        this.options = options;
+        this.options = options;
+    }
+    renderReviewPrompt() {
+        return "TODO";
+    }
+    debug() {
+        coreExports.debug(`${this.options}`);
+    }
+}
+
 const getOptions = () => {
     return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getInput("max_files"), coreExports.getBooleanInput("review_simple_changes"), coreExports.getBooleanInput("review_comment_lgtm"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_message"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("base_url"), coreExports.getInput("language"));
 };
@@ -34110,6 +34124,8 @@ async function run() {
     try {
         const options = getOptions();
         options.print();
+        const prompts = new Prompts(options);
+        prompts.debug();
         const repo = githubExports.context.repo;
         const pull_request = githubExports.context.payload.pull_request;
         const commitId = pull_request?.base?.sha;

@@ -8,6 +8,7 @@ import {
 import { context, getOctokit } from "@actions/github";
 import { Options } from "./option.js";
 import { parsePatch } from "./patchParser.js";
+import { Prompts } from "./prompts.js";
 
 const getOptions = () => {
   return new Options(
@@ -38,6 +39,10 @@ export async function run(): Promise<void> {
   try {
     const options = getOptions();
     options.print();
+
+    const prompts = new Prompts(options);
+    prompts.debug();
+
     const repo = context.repo;
 
     const pull_request = context.payload.pull_request;
