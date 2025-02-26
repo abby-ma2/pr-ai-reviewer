@@ -33956,6 +33956,124 @@ class PathFilter {
     }
 }
 
+/**
+ * parseChunkHeader
+ */
+const parseChunkHeader = (line) => {
+    const headerMatch = line.match(/@@ -(\d+),(\d+) \+(\d+),(\d+) @@ (.+)/);
+    if (!headerMatch) {
+        return null;
+    }
+    return {
+        origStart: Number.parseInt(headerMatch[1], 10),
+        origCount: Number.parseInt(headerMatch[2], 10),
+        modStart: Number.parseInt(headerMatch[3], 10),
+        modCount: Number.parseInt(headerMatch[4], 10),
+        firstLine: headerMatch[5],
+    };
+};
+/**
+ * processConflictMarker
+ */
+const processConflictMarker = (lines, i, origContent, modContent) => {
+    // start conflict
+    const markerLine = lines[i].replace(/^\+*/, "");
+    const parts = markerLine.split(" ");
+    const origBranch = parts[1]; // e.g. HEAD
+    let index = i + 1;
+    // original code
+    while (index < lines.length &&
+        !lines[index].replace(/^\+*/, "").startsWith("=======")) {
+        origContent.push(lines[index].replace(/^\+/, ""));
+        index++;
+    }
+    // スキップ "=======" 行
+    index++;
+    // modified code
+    while (index < lines.length &&
+        !lines[index].replace(/^\+*/, "").startsWith(">>>>>>>")) {
+        modContent.push(lines[index].replace(/^\+/, ""));
+        index++;
+    }
+    let modBranch;
+    let modCommitId;
+    // parse branch and commit id
+    if (index < lines.length) {
+        const marker = lines[index].replace(/^\+*/, "");
+        const commitMatch = marker.match(/>>>>>>> (\w+)\s+\(([^)]+)\)/);
+        if (commitMatch) {
+            modCommitId = commitMatch[1];
+            modBranch = commitMatch[2];
+        }
+        index++;
+    }
+    return { origBranch, modBranch, modCommitId, nextIndex: index };
+};
+/**
+ * processNormalLine
+ */
+const processNormalLine = (line, origContent, modContent) => {
+    if (line.startsWith("+")) {
+        const markerLine = line.replace(/^\+*/, " ");
+        modContent.push(markerLine);
+    }
+    else if (line.startsWith("-")) {
+        const markerLine = line.replace(/^-*/, " ");
+        origContent.push(markerLine);
+    }
+    else {
+        origContent.push(line);
+        modContent.push(line);
+    }
+};
+/**
+ * processChunk
+ */
+const processChunk = (lines, startIndex, filename) => {
+    const headerResult = parseChunkHeader(lines[startIndex]);
+    if (!headerResult) {
+        return { result: null, nextIndex: startIndex + 1 };
+    }
+    const { origStart, origCount, modStart, modCount, firstLine } = headerResult;
+    const origContent = [firstLine];
+    const modContent = [firstLine];
+    let origBranch;
+    let modBranch;
+    let modCommitId;
+    let i = startIndex + 1;
+    while (i < lines.length && !lines[i].startsWith("@@")) {
+        const currentLine = lines[i];
+        if (currentLine.includes("<<<<<<<")) {
+            const conflict = processConflictMarker(lines, i, origContent, modContent);
+            origBranch = conflict.origBranch;
+            modBranch = conflict.modBranch;
+            modCommitId = conflict.modCommitId;
+            i = conflict.nextIndex;
+            continue;
+        }
+        processNormalLine(currentLine, origContent, modContent);
+        i++;
+    }
+    const result = {
+        original: {
+            filename,
+            startLine: origStart,
+            lineCount: origCount,
+            branch: origBranch,
+            commitId: undefined,
+            content: origContent,
+        },
+        modified: {
+            filename,
+            startLine: modStart,
+            lineCount: modCount,
+            branch: modBranch,
+            commitId: modCommitId,
+            content: modContent,
+        },
+    };
+    return { result, nextIndex: i };
+};
 const parsePatch = ({ filename, patch, }) => {
     const results = [];
     if (!patch) {
@@ -33966,89 +34084,14 @@ const parsePatch = ({ filename, patch, }) => {
     while (i < lines.length) {
         const line = lines[i];
         if (line.startsWith("@@")) {
-            // parse chunk header
-            const headerMatch = line.match(/@@ -(\d+),(\d+) \+(\d+),(\d+) @@ (.+)/);
-            if (!headerMatch) {
-                i++;
-                continue;
+            const { result, nextIndex } = processChunk(lines, i, filename);
+            if (result) {
+                results.push(result);
             }
-            const origStart = Number.parseInt(headerMatch[1], 10);
-            const origCount = Number.parseInt(headerMatch[2], 10);
-            const modStart = Number.parseInt(headerMatch[3], 10);
-            const modCount = Number.parseInt(headerMatch[4], 10);
-            const firstLine = headerMatch[5];
-            const origContent = [firstLine];
-            const modContent = [firstLine];
-            let origBranch = undefined;
-            let modBranch = undefined;
-            let modCommitId = undefined;
+            i = nextIndex;
+        }
+        else {
             i++;
-            while (i < lines.length && !lines[i].startsWith("@@")) {
-                const currentLine = lines[i];
-                if (currentLine.includes("<<<<<<<")) {
-                    // 衝突マーカー開始。行頭の '+' は削除しておく
-                    const markerLine = currentLine.replace(/^\+*/, "");
-                    const parts = markerLine.split(" ");
-                    origBranch = parts[1]; // e.g. HEAD
-                    i++;
-                    // 変更前コード
-                    while (i < lines.length &&
-                        !lines[i].replace(/^\+*/, "").startsWith("=======")) {
-                        origContent.push(lines[i].replace(/^\+/, ""));
-                        i++;
-                    }
-                    // スキップ "=======" 行
-                    i++;
-                    // 変更後コード
-                    while (i < lines.length &&
-                        !lines[i].replace(/^\+*/, "").startsWith(">>>>>>>")) {
-                        modContent.push(lines[i].replace(/^\+/, ""));
-                        i++;
-                    }
-                    // 変更後マーカーに含まれるコミットIDとブランチ名を解析
-                    if (i < lines.length) {
-                        const marker = lines[i].replace(/^\+*/, "");
-                        const commitMatch = marker.match(/>>>>>>> (\w+)\s+\(([^)]+)\)/);
-                        if (commitMatch) {
-                            modCommitId = commitMatch[1];
-                            modBranch = commitMatch[2];
-                        }
-                        i++;
-                    }
-                    continue; // 衝突部分解析済みなのでチャンク終了
-                }
-                if (currentLine.startsWith("+")) {
-                    const markerLine = currentLine.replace(/^\+*/, " ");
-                    modContent.push(markerLine);
-                }
-                else if (currentLine.startsWith("-")) {
-                    const markerLine = currentLine.replace(/^-*/, " ");
-                    origContent.push(markerLine);
-                }
-                else {
-                    origContent.push(currentLine);
-                    modContent.push(currentLine);
-                }
-                i++;
-            }
-            results.push({
-                original: {
-                    filename,
-                    startLine: origStart,
-                    lineCount: origCount,
-                    branch: origBranch,
-                    commitId: undefined,
-                    content: origContent,
-                },
-                modified: {
-                    filename,
-                    startLine: modStart,
-                    lineCount: modCount,
-                    branch: modBranch,
-                    commitId: modCommitId,
-                    content: modContent,
-                },
-            });
         }
     }
     return results;

@@ -38,7 +38,7 @@ describe("parsePatch", () => {
         "   info,",
         "   setFailed,",
         ' } from "@actions/core";',
-      ], // 変更前コードは空
+      ],
     });
     expect(results[0].modified).toEqual({
       filename: "filename",
@@ -55,6 +55,44 @@ describe("parsePatch", () => {
         "   info,",
         "   setFailed,",
         ' } from "@actions/core";',
+      ],
+    });
+
+    expect(results[1].original).toEqual({
+      filename: "filename",
+      startLine: 79,
+      lineCount: 7,
+      branch: undefined,
+      commitId: undefined,
+      content: [
+        "export async function run(): Promise<void> {",
+        "         info(JSON.stringify(modifiedFile, null, 2));",
+        "       }",
+        "     });",
+        "   } catch (error) {",
+        "     // Fail the workflow run if an error occurs",
+        "     if (error instanceof Error) {",
+        "       setFailed(error.message);",
+      ],
+    });
+    expect(results[1].modified).toEqual({
+      filename: "filename",
+      startLine: 80,
+      lineCount: 10,
+      branch: undefined,
+      commitId: undefined,
+      content: [
+        "export async function run(): Promise<void> {",
+        "         info(JSON.stringify(modifiedFile, null, 2));",
+        "       }",
+        "     });",
+        " ",
+        '     info("done");',
+        "   } catch (error) {",
+        '     debug("error");',
+        "     // Fail the workflow run if an error occurs",
+        "     if (error instanceof Error) {",
+        "       setFailed(error.message);",
       ],
     });
   });
