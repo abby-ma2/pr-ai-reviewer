@@ -6,7 +6,6 @@ import {
 import type { Options } from "../option.js";
 import type { PatchParseResult } from "../patchParser.js";
 import type { Prompts } from "../prompts.js";
-import type { ModifiedFile } from "../types.js";
 import type { ChatBots } from "./index.js";
 
 const defaultModel = "gemini-2.0-flash-lite";
@@ -110,50 +109,5 @@ export class GeminiClient implements ChatBots {
     };
 
     return extensionMap[extension] || "Unknown";
-  }
-
-  /**
-   * PRの全体サマリーを生成する
-   * @param files レビューしたファイルとコメントの配列
-   * @returns サマリーコメント
-   */
-  async generateSummary(files: Array<ModifiedFile>): Promise<string> {
-    const fileDetailsArray = files.map(
-      (file) =>
-        `File: ${file.filename}\nReview Comments: ${file.reviewComment}`,
-    );
-
-    const prompt = `Please provide a concise summary of the following pull request based on the review comments for each file:
-      
-${fileDetailsArray.join("\n\n")}
-
-Summarize the main changes, potential issues found, and overall assessment of the pull request.`;
-
-    try {
-      const result = await this.model.generateContent({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: "You are an experienced code reviewer summarizing the changes in a pull request.",
-              },
-            ],
-          },
-          { role: "user", parts: [{ text: prompt }] },
-        ],
-        generationConfig: {
-          temperature: 0.5,
-          maxOutputTokens: 1000,
-        },
-      });
-
-      return result.response.text();
-    } catch (error) {
-      warning(
-        `Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      return "Failed to generate summary due to an API error.";
-    }
   }
 }

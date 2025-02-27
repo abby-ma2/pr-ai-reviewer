@@ -1,7 +1,6 @@
 import type { Options } from "../option.js";
 import type { PatchParseResult } from "../patchParser.js";
 import type { Prompts } from "../prompts.js";
-import type { ModifiedFile } from "../types.js";
 import type { ChatBots } from "./index.js";
 export declare class GeminiClient implements ChatBots {
     private client;
@@ -19,10 +18,4 @@ export declare class GeminiClient implements ChatBots {
      * ファイル拡張子からファイルタイプを判断
      */
     private getFileType;
-    /**
-     * PRの全体サマリーを生成する
-     * @param files レビューしたファイルとコメントの配列
-     * @returns サマリーコメント
-     */
-    generateSummary(files: Array<ModifiedFile>): Promise<string>;
 }

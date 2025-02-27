@@ -3,7 +3,6 @@ import OpenAI from "openai";
 import type { Options } from "../option.js";
 import type { PatchParseResult } from "../patchParser.js";
 import type { Prompts } from "../prompts.js";
-import type { ModifiedFile } from "../types.js";
 import type { ChatBots } from "./index.js";
 
 export class OpenAIClient implements ChatBots {
@@ -106,75 +105,5 @@ export class OpenAIClient implements ChatBots {
     };
 
     return extensionMap[extension] || "Unknown";
-  }
-
-  /**
-   * コードレビュー用のプロンプトを構築
-   */
-  private buildReviewPrompt(
-    filePath: string,
-    fileType: string,
-    originalCode: string,
-    modifiedCode: string,
-  ): string {
-    // TODO change
-    return `
-I need you to review code changes in a ${fileType} file: ${filePath}
-
-ORIGINAL CODE:
-\`\`\`${fileType.toLowerCase()}
-${originalCode}
-\`\`\`
-
-MODIFIED CODE:
-\`\`\`${fileType.toLowerCase()}
-${modifiedCode}
-\`\`\`
-
-Please analyze these changes and provide a detailed code review focusing on:
-1. Potential bugs or issues
-2. Performance concerns
-3. Security vulnerabilities
-4. Code quality improvements
-5. Maintainability suggestions
-
-If the changes look good, mention that. If there are issues, explain them and suggest improvements.
-Format your review as Markdown.
-${!this.options.reviewCommentLGTM ? 'If the code is LGTM (Looks Good To Me), just respond with "LGTM".' : ""}
-
-Your review:
-`;
-  }
-
-  /**
-   * PRの全体サマリーを生成する
-   * @param files レビューしたファイルとコメントの配列
-   * @returns サマリーコメント
-   */
-  async generateSummary(files: Array<ModifiedFile>): Promise<string> {
-    const prompt = "TODO";
-    debug(`${files}`);
-    try {
-      const response = await this.client.chat.completions.create({
-        model: this.options.model,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an experienced code reviewer summarizing the changes in a pull request.",
-          },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.5,
-        max_tokens: 1000,
-      });
-
-      return response.choices[0]?.message?.content || "";
-    } catch (error) {
-      warning(
-        `Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      return "Failed to generate summary due to an API error.";
-    }
   }
 }

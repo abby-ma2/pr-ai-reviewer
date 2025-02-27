@@ -3,7 +3,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Options } from "../option.js";
 import type { PatchParseResult } from "../patchParser.js";
 import type { Prompts } from "../prompts.js";
-import type { ModifiedFile } from "../types.js";
 import type { ChatBots } from "./index.js";
 
 const defaultModel = "claude-3-5-haiku-20241022";
@@ -70,42 +69,6 @@ export class ClaudeClient implements ChatBots {
       }
 
       return "Failed to review this file due to an API error.";
-    }
-  }
-
-  /**
-   * PRの全体サマリーを生成する
-   * @param files レビューしたファイルとコメントの配列
-   * @returns サマリーコメント
-   */
-  async generateSummary(files: Array<ModifiedFile>): Promise<string> {
-    const fileDetailsArray = files.map(
-      (file) =>
-        `File: ${file.filename}\nReview Comments: ${file.reviewComment}`,
-    );
-
-    const prompt = `Please provide a concise summary of the following pull request based on the review comments for each file:
-      
-${fileDetailsArray.join("\n\n")}
-
-Summarize the main changes, potential issues found, and overall assessment of the pull request.`;
-
-    try {
-      const result = await this.client.messages.create({
-        model: this.model,
-        system:
-          "You are an experienced code reviewer summarizing the changes in a pull request.",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 1000,
-        temperature: 0.5,
-      });
-
-      return result.content[0].text;
-    } catch (error) {
-      warning(
-        `Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      return "Failed to generate summary due to an API error.";
     }
   }
 }
