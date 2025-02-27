@@ -2,9 +2,11 @@ import { debug, info, warning } from "@actions/core";
 import OpenAI from "openai";
 import type { Options } from "../option.js";
 import type { PatchParseResult } from "../patchParser.js";
+import type { Prompts } from "../prompts.js";
 import type { ModifiedFile } from "../types.js";
+import type { ChatBots } from "./index.js";
 
-export class OpenAIClient {
+export class OpenAIClient implements ChatBots {
   private client: OpenAI;
   private options: Options;
 
@@ -27,28 +29,14 @@ export class OpenAIClient {
    * @param patch パッチ解析結果
    * @returns レビューコメント
    */
-  async reviewCode(patch: PatchParseResult): Promise<string> {
+  async reviewCode(prompt: Prompts, patch: PatchParseResult): Promise<string> {
     if (this.options.disableReview) {
       info("Code review is disabled in options");
       return "";
     }
 
     // ファイルタイプを判断（拡張子から）
-    const fileExtension = patch.original.filename.split(".").pop() || "";
-    const fileType = this.getFileType(fileExtension);
-
-    // レビュー対象のコードを準備
-    const originalCode = patch.original.content.join("\n");
-
-    const modifiedCode = patch.modified.content.join("\n");
-
-    // プロンプトを構築
-    const prompt = this.buildReviewPrompt(
-      patch.original.filename,
-      fileType,
-      originalCode,
-      modifiedCode,
-    );
+    // const fileExtension = patch.original.filename.split(".").pop() || "";      const fileType = this.getFileType(fileExtension);
 
     try {
       // OpenAI APIを呼び出す
@@ -56,7 +44,7 @@ export class OpenAIClient {
         model: this.options.model,
         messages: [
           { role: "system", content: this.options.systemMessage },
-          { role: "user", content: prompt },
+          { role: "user", content: prompt.renderReviewPrompt() },
         ],
         temperature: 0.3,
         max_tokens: 2000,
@@ -80,7 +68,7 @@ export class OpenAIClient {
           `Retrying review for ${patch.original.filename} (${this.options.retries} retries left)`,
         );
         this.options.retries--;
-        return this.reviewCode(patch);
+        return this.reviewCode(prompt, patch);
       }
 
       return "Failed to review this file due to an API error.";
