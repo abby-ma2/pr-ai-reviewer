@@ -1,25 +1,31 @@
 import { debug, info, warning } from "@actions/core";
-import OpenAI from "openai";
+import {
+  type GenerativeModel,
+  GoogleGenerativeAI,
+} from "@google/generative-ai";
 import type { Options } from "../option.js";
 import type { PatchParseResult } from "../patchParser.js";
 import type { Prompts } from "../prompts.js";
 import type { ModifiedFile } from "../types.js";
 import type { ChatBots } from "./index.js";
 
-export class OpenAIClient implements ChatBots {
-  private client: OpenAI;
+const defaultModel = "gemini-2.0-flash-lite";
+
+export class GeminiClient implements ChatBots {
+  private client: GoogleGenerativeAI;
+  private model: GenerativeModel;
   private options: Options;
 
   constructor(apiKey: string, options: Options) {
     this.options = options;
-    this.client = new OpenAI({
-      apiKey: apiKey,
-      baseURL: options.apiBaseUrl,
+    this.client = new GoogleGenerativeAI(apiKey);
+    this.model = this.client.getGenerativeModel({
+      model: options.model || defaultModel,
     });
 
     if (this.options.debug) {
-      debug(`OpenAI client initialized with base URL: ${options.apiBaseUrl}`);
-      debug(`Using model: ${options.model}`);
+      debug("Gemini client initialized");
+      debug(`Using model: ${this.model}`);
     }
   }
 
@@ -35,22 +41,20 @@ export class OpenAIClient implements ChatBots {
       return "";
     }
 
-    // ファイルタイプを判断（拡張子から）
-    // const fileExtension = patch.original.filename.split(".").pop() || "";      const fileType = this.getFileType(fileExtension);
-
     try {
-      // OpenAI APIを呼び出す
-      const response = await this.client.chat.completions.create({
-        model: this.options.model,
-        messages: [
-          { role: "system", content: this.options.systemMessage },
-          { role: "user", content: prompt.renderReviewPrompt() },
+      // Gemini APIを呼び出す
+      const result = await this.model.generateContent({
+        contents: [
+          { role: "user", parts: [{ text: this.options.systemMessage }] },
+          { role: "user", parts: [{ text: prompt.renderReviewPrompt() }] },
         ],
-        temperature: 0.1,
-        // max_tokens: 2000,
+        generationConfig: {
+          temperature: 0.1,
+          // maxOutputTokens: 2000,
+        },
       });
 
-      const reviewComment = response.choices[0]?.message?.content || "";
+      const reviewComment = result.response.text();
 
       if (this.options.debug) {
         debug(`Review for ${patch.original.filename}:\n${reviewComment}`);
@@ -109,67 +113,42 @@ export class OpenAIClient implements ChatBots {
   }
 
   /**
-   * コードレビュー用のプロンプトを構築
-   */
-  private buildReviewPrompt(
-    filePath: string,
-    fileType: string,
-    originalCode: string,
-    modifiedCode: string,
-  ): string {
-    // TODO change
-    return `
-I need you to review code changes in a ${fileType} file: ${filePath}
-
-ORIGINAL CODE:
-\`\`\`${fileType.toLowerCase()}
-${originalCode}
-\`\`\`
-
-MODIFIED CODE:
-\`\`\`${fileType.toLowerCase()}
-${modifiedCode}
-\`\`\`
-
-Please analyze these changes and provide a detailed code review focusing on:
-1. Potential bugs or issues
-2. Performance concerns
-3. Security vulnerabilities
-4. Code quality improvements
-5. Maintainability suggestions
-
-If the changes look good, mention that. If there are issues, explain them and suggest improvements.
-Format your review as Markdown.
-${!this.options.reviewCommentLGTM ? 'If the code is LGTM (Looks Good To Me), just respond with "LGTM".' : ""}
-
-Your review:
-`;
-  }
-
-  /**
    * PRの全体サマリーを生成する
    * @param files レビューしたファイルとコメントの配列
    * @returns サマリーコメント
    */
   async generateSummary(files: Array<ModifiedFile>): Promise<string> {
-    const prompt = "TODO";
-    debug(`${files}`);
+    const fileDetailsArray = files.map(
+      (file) =>
+        `File: ${file.filename}\nReview Comments: ${file.reviewComment}`,
+    );
+
+    const prompt = `Please provide a concise summary of the following pull request based on the review comments for each file:
+      
+${fileDetailsArray.join("\n\n")}
+
+Summarize the main changes, potential issues found, and overall assessment of the pull request.`;
+
     try {
-      const response = await this.client.chat.completions.create({
-        model: this.options.model,
-        messages: [
+      const result = await this.model.generateContent({
+        contents: [
           {
-            role: "system",
-            content:
-              "You are an experienced code reviewer summarizing the changes in a pull request.",
+            role: "user",
+            parts: [
+              {
+                text: "You are an experienced code reviewer summarizing the changes in a pull request.",
+              },
+            ],
           },
-          { role: "user", content: prompt },
+          { role: "user", parts: [{ text: prompt }] },
         ],
-        temperature: 0.5,
-        max_tokens: 1000,
+        generationConfig: {
+          temperature: 0.5,
+          maxOutputTokens: 1000,
+        },
       });
 
-      return response.choices[0]?.message?.content || "";
+      return result.response.text();
     } catch (error) {
       warning(
         `Failed to generate summary: ${error instanceof Error ? error.message : String(error)}`,
