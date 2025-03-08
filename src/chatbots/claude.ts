@@ -2,8 +2,8 @@ import { debug, info, warning } from "@actions/core";
 import Anthropic from "@anthropic-ai/sdk";
 import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
-import type { PatchParseResult } from "../patchParser.js";
 import type { Prompts } from "../prompts.js";
+import type { ChangeFile } from "../types.js";
 import type { ChatBots } from "./index.js";
 
 const defaultModel = "claude-3-5-haiku-20241022";
@@ -35,7 +35,7 @@ export class ClaudeClient implements ChatBots {
   async reviewCode(
     ctx: PullRequestContext,
     prompt: Prompts,
-    patch: PatchParseResult,
+    change: ChangeFile,
   ): Promise<string> {
     if (this.options.disableReview) {
       info("Code review is disabled in options");
@@ -48,7 +48,7 @@ export class ClaudeClient implements ChatBots {
         model: this.model,
         system: this.options.systemMessage,
         messages: [
-          { role: "user", content: prompt.renderReviewPrompt(ctx, patch) },
+          { role: "user", content: prompt.renderReviewPrompt(ctx, change) },
         ],
         max_tokens: 2000,
         temperature: 0.1,
@@ -57,22 +57,22 @@ export class ClaudeClient implements ChatBots {
       const reviewComment = result.content[0];
 
       if (this.options.debug) {
-        debug(`Review for ${patch.from.filename}:\n${reviewComment}`);
+        debug(`Review for ${change.from.filename}:\n${reviewComment}`);
       }
 
       return reviewComment.type === "text" ? reviewComment.text : "";
     } catch (error) {
       warning(
-        `Failed to review code for ${patch.from.filename}: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to review code for ${change.from.filename}: ${error instanceof Error ? error.message : String(error)}`,
       );
 
       // リトライロジック
       if (this.options.retries > 0) {
         info(
-          `Retrying review for ${patch.from.filename} (${this.options.retries} retries left)`,
+          `Retrying review for ${change.from.filename} (${this.options.retries} retries left)`,
         );
         this.options.retries--;
-        return this.reviewCode(ctx, prompt, patch);
+        return this.reviewCode(ctx, prompt, change);
       }
 
       return "Failed to review this file due to an API error.";

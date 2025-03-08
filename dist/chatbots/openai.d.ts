@@ -1,7 +1,7 @@
 import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
-import type { PatchParseResult } from "../patchParser.js";
 import type { Prompts } from "../prompts.js";
+import type { ChangeFile } from "../types.js";
 import type { ChatBots } from "./index.js";
 export declare class OpenAIClient implements ChatBots {
     private client;
@@ -13,9 +13,5 @@ export declare class OpenAIClient implements ChatBots {
      * @param patch パッチ解析結果
      * @returns レビューコメント
      */
-    reviewCode(ctx: PullRequestContext, prompt: Prompts, patch: PatchParseResult): Promise<string>;
-    /**
-     * ファイル拡張子からファイルタイプを判断
-     */
-    private getFileType;
+    reviewCode(ctx: PullRequestContext, prompt: Prompts, change: ChangeFile): Promise<string>;
 }
