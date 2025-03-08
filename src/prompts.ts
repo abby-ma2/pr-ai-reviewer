@@ -1,5 +1,7 @@
 import { debug } from "@actions/core";
+import type { PullRequestContext } from "./context.js";
 import type { Options } from "./option.js";
+import type { PatchParseResult } from "./patchParser.js";
 
 const reviewFileDiff = `## GitHub PR Title
 
@@ -99,15 +101,26 @@ LGTM!
 ## Changes made to \`$filename\` for your review
 
 $patches
-`
+`;
 
 export class Prompts {
   constructor(private options: Options) {
     this.options = options;
   }
 
-  renderReviewPrompt(): string {
-    return "TODO";
+  renderReviewPrompt(
+    ctx: PullRequestContext,
+    result: PatchParseResult,
+  ): string {
+    const prompts = reviewFileDiff.replace("$title", ctx.title);
+    return prompts.replace("$patches", this.renderHunk(result));
+  }
+
+  renderHunk(result: PatchParseResult): string {
+    const fromContent = result.from.content.join("\n");
+    const toContent = result.to.content.join("\n");
+
+    return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``;
   }
 
   debug(): void {

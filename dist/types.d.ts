@@ -1,4 +1,4 @@
-import type { CodeSection } from "./patchParser.js";
+import type { Hunk } from "./patchParser.js";
 export type ModifiedFile = {
     filename: string;
     sha: string;
@@ -7,6 +7,6 @@ export type ModifiedFile = {
     deletions: number;
     changes: number;
     url: string;
-    original: CodeSection;
-    modified: CodeSection;
+    original: Hunk;
+    modified: Hunk;
 };

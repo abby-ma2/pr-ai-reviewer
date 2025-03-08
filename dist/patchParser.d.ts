@@ -1,4 +1,4 @@
-export type CodeSection = {
+export type Hunk = {
     filename: string;
     startLine: number;
     lineCount: number;
@@ -7,8 +7,8 @@ export type CodeSection = {
     content: string[];
 };
 export type PatchParseResult = {
-    original: CodeSection;
-    modified: CodeSection;
+    from: Hunk;
+    to: Hunk;
 };
 export declare const parsePatch: ({ filename, patch, }: {
     filename: string;

@@ -1,3 +1,4 @@
+import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
 import type { PatchParseResult } from "../patchParser.js";
 import type { Prompts } from "../prompts.js";
@@ -13,7 +14,7 @@ export declare class GeminiClient implements ChatBots {
      * @param patch パッチ解析結果
      * @returns レビューコメント
      */
-    reviewCode(prompt: Prompts, patch: PatchParseResult): Promise<string>;
+    reviewCode(ctx: PullRequestContext, prompt: Prompts, patch: PatchParseResult): Promise<string>;
     /**
      * ファイル拡張子からファイルタイプを判断
      */

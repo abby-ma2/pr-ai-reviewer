@@ -78,8 +78,8 @@ export async function run(): Promise<void> {
           changes: file.changes,
           rawUrl: file.raw_url,
           url: file.contents_url,
-          original: result.original,
-          modified: result.modified,
+          original: result.from,
+          modified: result.to,
         };
         info(JSON.stringify(modifiedFile, null, 2));
       }

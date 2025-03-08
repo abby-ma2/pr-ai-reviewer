@@ -6,5 +6,3 @@ export type PullRequestContext = {
   repo: string;
   pull_number: number;
 };
-
-

@@ -33965,26 +33965,28 @@ const parseChunkHeader = (line) => {
         return null;
     }
     return {
-        origStart: Number.parseInt(headerMatch[1], 10),
-        origCount: Number.parseInt(headerMatch[2], 10),
-        modStart: Number.parseInt(headerMatch[3], 10),
-        modCount: Number.parseInt(headerMatch[4], 10),
+        fromStart: Number.parseInt(headerMatch[1], 10),
+        fromCount: Number.parseInt(headerMatch[2], 10),
+        toStart: Number.parseInt(headerMatch[3], 10),
+        toCount: Number.parseInt(headerMatch[4], 10),
         firstLine: headerMatch[5],
     };
 };
 /**
  * processConflictMarker
  */
-const processConflictMarker = (lines, i, origContent, modContent) => {
+const processConflictMarker = (lines, patchLineNo, lineNo, fromContent, toContent) => {
     // start conflict
-    const markerLine = lines[i].replace(/^\+*/, "");
+    // const markerLine = lines[lineNo].replace(/^\+*/, "");
+    const markerLine = lines[lineNo];
     const parts = markerLine.split(" ");
     const origBranch = parts[1]; // e.g. HEAD
-    let index = i + 1;
+    let index = lineNo + 1;
     // original code
     while (index < lines.length &&
         !lines[index].replace(/^\+*/, "").startsWith("=======")) {
-        origContent.push(lines[index].replace(/^\+/, ""));
+        // origContent.push(lines[index].replace(/^\+/, ""));
+        fromContent.push(lines[index]);
         index++;
     }
     // スキップ "=======" 行
@@ -33992,14 +33994,16 @@ const processConflictMarker = (lines, i, origContent, modContent) => {
     // modified code
     while (index < lines.length &&
         !lines[index].replace(/^\+*/, "").startsWith(">>>>>>>")) {
-        modContent.push(lines[index].replace(/^\+/, ""));
+        // modContent.push(lines[index].replace(/^\+/, ""));
+        toContent.push(`${patchLineNo} ${lines[index]}`);
         index++;
     }
     let modBranch;
     let modCommitId;
     // parse branch and commit id
     if (index < lines.length) {
-        const marker = lines[index].replace(/^\+*/, "");
+        // const marker = lines[index].replace(/^\+*/, "");
+        const marker = lines[index];
         const commitMatch = marker.match(/>>>>>>> (\w+)\s+\(([^)]+)\)/);
         if (commitMatch) {
             modCommitId = commitMatch[1];
@@ -34012,18 +34016,18 @@ const processConflictMarker = (lines, i, origContent, modContent) => {
 /**
  * processNormalLine
  */
-const processNormalLine = (line, origContent, modContent) => {
+const processNormalLine = (lineNo, line, fromContent, toContent) => {
     if (line.startsWith("+")) {
-        const markerLine = line.replace(/^\+*/, " ");
-        modContent.push(markerLine);
+        // const markerLine = line.replace(/^\+*/, " ");
+        toContent.push(`${lineNo + 1} ${line}`);
     }
     else if (line.startsWith("-")) {
-        const markerLine = line.replace(/^-*/, " ");
-        origContent.push(markerLine);
+        // const markerLine = line.replace(/^-*/, " ");
+        fromContent.push(line);
     }
     else {
-        origContent.push(line);
-        modContent.push(line);
+        fromContent.push(line);
+        toContent.push(`${lineNo + 1} ${line}`);
     }
 };
 /**
@@ -34034,9 +34038,10 @@ const processChunk = (lines, startIndex, filename) => {
     if (!headerResult) {
         return { result: null, nextIndex: startIndex + 1 };
     }
-    const { origStart, origCount, modStart, modCount, firstLine } = headerResult;
-    const origContent = [firstLine];
-    const modContent = [firstLine];
+    const { fromStart, fromCount, toStart, toCount, firstLine } = headerResult;
+    let lineNo = toStart - 1;
+    const fromContent = [firstLine];
+    const toContent = [`${lineNo}  ${firstLine}`];
     let origBranch;
     let modBranch;
     let modCommitId;
@@ -34044,32 +34049,34 @@ const processChunk = (lines, startIndex, filename) => {
     while (i < lines.length && !lines[i].startsWith("@@")) {
         const currentLine = lines[i];
         if (currentLine.includes("<<<<<<<")) {
-            const conflict = processConflictMarker(lines, i, origContent, modContent);
+            lineNo++;
+            const conflict = processConflictMarker(lines, lineNo, i, fromContent, toContent);
             origBranch = conflict.origBranch;
             modBranch = conflict.modBranch;
             modCommitId = conflict.modCommitId;
             i = conflict.nextIndex;
             continue;
         }
-        processNormalLine(currentLine, origContent, modContent);
+        processNormalLine(lineNo, currentLine, fromContent, toContent);
         i++;
+        lineNo++;
     }
     const result = {
-        original: {
+        from: {
             filename,
-            startLine: origStart,
-            lineCount: origCount,
+            startLine: fromStart,
+            lineCount: fromCount,
             branch: origBranch,
             commitId: undefined,
-            content: origContent,
+            content: fromContent,
         },
-        modified: {
+        to: {
             filename,
-            startLine: modStart,
-            lineCount: modCount,
+            startLine: toStart,
+            lineCount: toCount,
             branch: modBranch,
             commitId: modCommitId,
-            content: modContent,
+            content: toContent,
         },
     };
     return { result, nextIndex: i };
@@ -34097,14 +34104,119 @@ const parsePatch = ({ filename, patch, }) => {
     return results;
 };
 
+const reviewFileDiff = `## GitHub PR Title
+
+\`$title\`
+
+## Description
+
+\`\`\`
+$description
+\`\`\`
+
+## Summary of changes
+
+\`\`\`
+$short_summary
+\`\`\`
+
+## IMPORTANT Instructions
+
+Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments.
+Additional Context: PR title, description, summaries and comment chains.
+Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
+Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use example response format below.
+Use fenced code blocks using the relevant language identifier where applicable.
+Don't annotate code snippets with line numbers. Format and indent code correctly.
+Do not use \`suggestion\` code blocks.
+For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
+
+Consider:
+1. Code quality and adherence to best practices
+2. Potential bugs or edge cases
+3. Performance optimizations
+4. Readability and maintainability
+5. Any security concerns
+Suggest improvements and explain your reasoning for each suggestion.
+- Do NOT provide general feedback, summaries, explanations of changes, or praises
+  for making good additions.
+- Focus solely on offering specific, objective insights based on the
+  given context and refrain from making broad comments about potential impacts on
+  the system or question intentions behind the changes.
+
+If there are no issues found on a line range, you MUST respond with the
+text \`LGTM!\` for that line range in the review section.
+
+## Example
+
+### Example changes
+
+---new_hunk---
+\`\`\`
+  z = x / y
+    return z
+
+20: def add(x, y):
+21:     z = x + y
+22:     retrn z
+23:
+24: def multiply(x, y):
+25:     return x * y
+
+def subtract(x, y):
+  z = x - y
+\`\`\`
+
+---old_hunk---
+\`\`\`
+  z = x / y
+    return z
+
+def add(x, y):
+    return x + y
+
+def subtract(x, y):
+    z = x - y
+\`\`\`
+
+---comment_chains---
+\`\`\`
+Please review this change.
+\`\`\`
+
+---end_change_section---
+
+### Example response
+
+22-22:
+There's a syntax error in the add function.
+\`\`\`diff
+-    retrn z
++    return z
+\`\`\`
+---
+24-25:
+LGTM!
+---
+
+## Changes made to \`$filename\` for your review
+
+$patches
+`;
 class Prompts {
     options;
     constructor(options) {
         this.options = options;
         this.options = options;
     }
-    renderReviewPrompt() {
-        return "TODO";
+    renderReviewPrompt(ctx, result) {
+        const prompts = reviewFileDiff.replace("$title", ctx.title);
+        return prompts.replace("$patches", this.renderHunk(result));
+    }
+    renderHunk(result) {
+        const fromContent = result.from.content.join("\n");
+        const toContent = result.to.content.join("\n");
+        return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``;
     }
     debug() {
         coreExports.debug(`${this.options}`);
@@ -34155,8 +34267,8 @@ async function run() {
                     changes: file.changes,
                     rawUrl: file.raw_url,
                     url: file.contents_url,
-                    original: result.original,
-                    modified: result.modified,
+                    original: result.from,
+                    modified: result.to,
                 };
                 coreExports.info(JSON.stringify(modifiedFile, null, 2));
             }

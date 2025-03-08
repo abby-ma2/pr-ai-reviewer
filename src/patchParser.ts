@@ -1,4 +1,4 @@
-export type CodeSection = {
+export type Hunk = {
   filename: string;
   startLine: number;
   lineCount: number;
@@ -8,8 +8,8 @@ export type CodeSection = {
 };
 
 export type PatchParseResult = {
-  original: CodeSection;
-  modified: CodeSection;
+  from: Hunk;
+  to: Hunk;
 };
 
 /**
@@ -18,10 +18,10 @@ export type PatchParseResult = {
 const parseChunkHeader = (
   line: string,
 ): {
-  origStart: number;
-  origCount: number;
-  modStart: number;
-  modCount: number;
+  fromStart: number;
+  fromCount: number;
+  toStart: number;
+  toCount: number;
   firstLine: string;
 } | null => {
   const headerMatch = line.match(/@@ -(\d+),(\d+) \+(\d+),(\d+) @@ (.+)/);
@@ -30,10 +30,10 @@ const parseChunkHeader = (
   }
 
   return {
-    origStart: Number.parseInt(headerMatch[1], 10),
-    origCount: Number.parseInt(headerMatch[2], 10),
-    modStart: Number.parseInt(headerMatch[3], 10),
-    modCount: Number.parseInt(headerMatch[4], 10),
+    fromStart: Number.parseInt(headerMatch[1], 10),
+    fromCount: Number.parseInt(headerMatch[2], 10),
+    toStart: Number.parseInt(headerMatch[3], 10),
+    toCount: Number.parseInt(headerMatch[4], 10),
     firstLine: headerMatch[5],
   };
 };
@@ -43,9 +43,10 @@ const parseChunkHeader = (
  */
 const processConflictMarker = (
   lines: string[],
-  i: number,
-  origContent: string[],
-  modContent: string[],
+  patchLineNo: number,
+  lineNo: number,
+  fromContent: string[],
+  toContent: string[],
 ): {
   origBranch?: string;
   modBranch?: string;
@@ -53,17 +54,19 @@ const processConflictMarker = (
   nextIndex: number;
 } => {
   // start conflict
-  const markerLine = lines[i].replace(/^\+*/, "");
+  // const markerLine = lines[lineNo].replace(/^\+*/, "");
+  const markerLine = lines[lineNo];
   const parts = markerLine.split(" ");
   const origBranch = parts[1]; // e.g. HEAD
-  let index = i + 1;
+  let index = lineNo + 1;
 
   // original code
   while (
     index < lines.length &&
     !lines[index].replace(/^\+*/, "").startsWith("=======")
   ) {
-    origContent.push(lines[index].replace(/^\+/, ""));
+    // origContent.push(lines[index].replace(/^\+/, ""));
+    fromContent.push(lines[index]);
     index++;
   }
 
@@ -75,7 +78,8 @@ const processConflictMarker = (
     index < lines.length &&
     !lines[index].replace(/^\+*/, "").startsWith(">>>>>>>")
   ) {
-    modContent.push(lines[index].replace(/^\+/, ""));
+    // modContent.push(lines[index].replace(/^\+/, ""));
+    toContent.push(`${patchLineNo} ${lines[index]}`);
     index++;
   }
 
@@ -84,7 +88,8 @@ const processConflictMarker = (
 
   // parse branch and commit id
   if (index < lines.length) {
-    const marker = lines[index].replace(/^\+*/, "");
+    // const marker = lines[index].replace(/^\+*/, "");
+    const marker = lines[index];
     const commitMatch = marker.match(/>>>>>>> (\w+)\s+\(([^)]+)\)/);
     if (commitMatch) {
       modCommitId = commitMatch[1];
@@ -100,19 +105,20 @@ const processConflictMarker = (
  * processNormalLine
  */
 const processNormalLine = (
+  lineNo: number,
   line: string,
-  origContent: string[],
-  modContent: string[],
+  fromContent: string[],
+  toContent: string[],
 ) => {
   if (line.startsWith("+")) {
-    const markerLine = line.replace(/^\+*/, " ");
-    modContent.push(markerLine);
+    // const markerLine = line.replace(/^\+*/, " ");
+    toContent.push(`${lineNo + 1} ${line}`);
   } else if (line.startsWith("-")) {
-    const markerLine = line.replace(/^-*/, " ");
-    origContent.push(markerLine);
+    // const markerLine = line.replace(/^-*/, " ");
+    fromContent.push(line);
   } else {
-    origContent.push(line);
-    modContent.push(line);
+    fromContent.push(line);
+    toContent.push(`${lineNo + 1} ${line}`);
   }
 };
 
@@ -129,10 +135,10 @@ const processChunk = (
     return { result: null, nextIndex: startIndex + 1 };
   }
 
-  const { origStart, origCount, modStart, modCount, firstLine } = headerResult;
-
-  const origContent: string[] = [firstLine];
-  const modContent: string[] = [firstLine];
+  const { fromStart, fromCount, toStart, toCount, firstLine } = headerResult;
+  let lineNo = toStart - 1;
+  const fromContent: string[] = [firstLine];
+  const toContent: string[] = [`${lineNo}  ${firstLine}`];
 
   let origBranch: string | undefined;
   let modBranch: string | undefined;
@@ -143,7 +149,14 @@ const processChunk = (
     const currentLine = lines[i];
 
     if (currentLine.includes("<<<<<<<")) {
-      const conflict = processConflictMarker(lines, i, origContent, modContent);
+      lineNo++;
+      const conflict = processConflictMarker(
+        lines,
+        lineNo,
+        i,
+        fromContent,
+        toContent,
+      );
 
       origBranch = conflict.origBranch;
       modBranch = conflict.modBranch;
@@ -152,26 +165,27 @@ const processChunk = (
       continue;
     }
 
-    processNormalLine(currentLine, origContent, modContent);
+    processNormalLine(lineNo, currentLine, fromContent, toContent);
     i++;
+    lineNo++;
   }
 
   const result: PatchParseResult = {
-    original: {
+    from: {
       filename,
-      startLine: origStart,
-      lineCount: origCount,
+      startLine: fromStart,
+      lineCount: fromCount,
       branch: origBranch,
       commitId: undefined,
-      content: origContent,
+      content: fromContent,
     },
-    modified: {
+    to: {
       filename,
-      startLine: modStart,
-      lineCount: modCount,
+      startLine: toStart,
+      lineCount: toCount,
       branch: modBranch,
       commitId: modCommitId,
-      content: modContent,
+      content: toContent,
     },
   };
 
