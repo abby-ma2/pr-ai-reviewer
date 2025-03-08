@@ -1,7 +1,7 @@
 import { debug } from "@actions/core";
 import type { PullRequestContext } from "./context.js";
 import type { Options } from "./option.js";
-import type { PatchParseResult } from "./patchParser.js";
+import type { ChangeFile } from "./types.js";
 
 const reviewFileDiff = `## GitHub PR Title
 
@@ -108,17 +108,14 @@ export class Prompts {
     this.options = options;
   }
 
-  renderReviewPrompt(
-    ctx: PullRequestContext,
-    result: PatchParseResult,
-  ): string {
+  renderReviewPrompt(ctx: PullRequestContext, change: ChangeFile): string {
     const prompts = reviewFileDiff.replace("$title", ctx.title);
-    return prompts.replace("$patches", this.renderHunk(result));
+    return prompts.replace("$patches", this.renderHunk(change));
   }
 
-  renderHunk(result: PatchParseResult): string {
-    const fromContent = result.from.content.join("\n");
-    const toContent = result.to.content.join("\n");
+  renderHunk(change: ChangeFile): string {
+    const fromContent = change.from.content.join("\n");
+    const toContent = change.to.content.join("\n");
 
     return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``;
   }

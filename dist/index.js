@@ -34209,13 +34209,13 @@ class Prompts {
         this.options = options;
         this.options = options;
     }
-    renderReviewPrompt(ctx, result) {
+    renderReviewPrompt(ctx, change) {
         const prompts = reviewFileDiff.replace("$title", ctx.title);
-        return prompts.replace("$patches", this.renderHunk(result));
+        return prompts.replace("$patches", this.renderHunk(change));
     }
-    renderHunk(result) {
-        const fromContent = result.from.content.join("\n");
-        const toContent = result.to.content.join("\n");
+    renderHunk(change) {
+        const fromContent = change.from.content.join("\n");
+        const toContent = change.to.content.join("\n");
         return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``;
     }
     debug() {
@@ -34240,6 +34240,13 @@ async function run() {
         prompts.debug();
         const repo = githubExports.context.repo;
         const pull_request = githubExports.context.payload.pull_request;
+        const prContext = {
+            owner: repo.owner,
+            title: pull_request?.title,
+            description: pull_request?.body,
+            repo: repo.repo,
+            pullRequestNumber: pull_request?.number,
+        };
         const commitId = pull_request?.base?.sha;
         if (!commitId) {
             throw new Error("No commit id found");
@@ -34251,28 +34258,36 @@ async function run() {
             base: pull_request.base.sha,
             head: pull_request.head.sha,
         });
-        targetBranchDiff.data.files?.map((file) => {
-            coreExports.info(`${file.patch}`);
-            const results = parsePatch({
-                filename: file.filename,
-                patch: file.patch,
-            });
-            for (const result of results) {
-                const modifiedFile = {
+        const changes = [];
+        if (targetBranchDiff.data.files) {
+            for (const file of targetBranchDiff.data.files) {
+                if (!file.patch) {
+                    continue;
+                }
+                const results = parsePatch({
                     filename: file.filename,
-                    sha: file.sha,
-                    status: file.status,
-                    additions: file.additions,
-                    deletions: file.deletions,
-                    changes: file.changes,
-                    rawUrl: file.raw_url,
-                    url: file.contents_url,
-                    original: result.from,
-                    modified: result.to,
-                };
-                coreExports.info(JSON.stringify(modifiedFile, null, 2));
+                    patch: file.patch,
+                });
+                for (const result of results) {
+                    const modifiedFile = {
+                        filename: file.filename,
+                        sha: file.sha,
+                        status: file.status,
+                        additions: file.additions,
+                        deletions: file.deletions,
+                        changes: file.changes,
+                        url: file.contents_url,
+                        from: result.from,
+                        to: result.to,
+                    };
+                    changes.push(modifiedFile);
+                }
             }
-        });
+        }
+        for (const change of changes) {
+            const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
+            coreExports.info(reviewPrompt);
+        }
     }
     catch (error) {
         // Fail the workflow run if an error occurs

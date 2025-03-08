@@ -6,9 +6,11 @@ import {
   setFailed,
 } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
+import type { PullRequestContext } from "./context.js";
 import { Options } from "./option.js";
 import { parsePatch } from "./patchParser.js";
 import { Prompts } from "./prompts.js";
+import type { ChangeFile } from "./types.js";
 
 const getOptions = () => {
   return new Options(
@@ -46,6 +48,14 @@ export async function run(): Promise<void> {
     const repo = context.repo;
 
     const pull_request = context.payload.pull_request;
+    const prContext: PullRequestContext = {
+      owner: repo.owner,
+      title: pull_request?.title,
+      description: pull_request?.body,
+      repo: repo.repo,
+      pullRequestNumber: pull_request?.number,
+    };
+
     const commitId = pull_request?.base?.sha;
     if (!commitId) {
       throw new Error("No commit id found");
@@ -60,30 +70,38 @@ export async function run(): Promise<void> {
       head: pull_request.head.sha,
     });
 
-    targetBranchDiff.data.files?.map((file) => {
-      info(`${file.patch}`);
-
-      const results = parsePatch({
-        filename: file.filename,
-        patch: file.patch,
-      });
-
-      for (const result of results) {
-        const modifiedFile = {
+    const changes = [];
+    if (targetBranchDiff.data.files) {
+      for (const file of targetBranchDiff.data.files) {
+        if (!file.patch) {
+          continue;
+        }
+        const results = parsePatch({
           filename: file.filename,
-          sha: file.sha,
-          status: file.status,
-          additions: file.additions,
-          deletions: file.deletions,
-          changes: file.changes,
-          rawUrl: file.raw_url,
-          url: file.contents_url,
-          original: result.from,
-          modified: result.to,
-        };
-        info(JSON.stringify(modifiedFile, null, 2));
+          patch: file.patch,
+        });
+
+        for (const result of results) {
+          const modifiedFile = {
+            filename: file.filename,
+            sha: file.sha,
+            status: file.status,
+            additions: file.additions,
+            deletions: file.deletions,
+            changes: file.changes,
+            url: file.contents_url,
+            from: result.from,
+            to: result.to,
+          } satisfies ChangeFile;
+          changes.push(modifiedFile);
+        }
       }
-    });
+    }
+
+    for (const change of changes) {
+      const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
+      info(reviewPrompt);
+    }
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) {

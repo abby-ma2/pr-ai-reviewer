@@ -1,5 +1,5 @@
 import type { Hunk } from "./patchParser.js";
-export type ModifiedFile = {
+export type ChangeFile = {
     filename: string;
     sha: string;
     status: string;
@@ -7,6 +7,6 @@ export type ModifiedFile = {
     deletions: number;
     changes: number;
     url: string;
-    original: Hunk;
-    modified: Hunk;
+    from: Hunk;
+    to: Hunk;
 };
