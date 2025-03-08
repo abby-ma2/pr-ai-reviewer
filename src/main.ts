@@ -33,6 +33,101 @@ const getOptions = () => {
 const token = getInput("token") || process.env.GITHUB_TOKEN || "";
 
 /**
+ * PRコンテキストを取得する
+ *
+ * @returns PRコンテキスト
+ */
+const getPrContext = (): PullRequestContext => {
+  const repo = context.repo;
+  const pull_request = context.payload.pull_request;
+
+  return {
+    owner: repo.owner,
+    title: pull_request?.title,
+    description: pull_request?.body,
+    repo: repo.repo,
+    pullRequestNumber: pull_request?.number,
+  };
+};
+
+/**
+ * 変更ファイルを取得する
+ *
+ * @param octokit GitHubクライアント
+ * @returns 変更ファイルの配列
+ */
+const getChangedFiles = async (
+  octokit: ReturnType<typeof getOctokit>,
+): Promise<ChangeFile[]> => {
+  const pull_request = context.payload.pull_request;
+  const repo = context.repo;
+
+  if (!pull_request?.base?.sha) {
+    throw new Error("No commit id found");
+  }
+
+  const targetBranchDiff = await octokit.rest.repos.compareCommits({
+    owner: repo.owner,
+    repo: repo.repo,
+    base: pull_request.base.sha,
+    head: pull_request.head.sha,
+  });
+
+  const changes: ChangeFile[] = [];
+
+  if (!targetBranchDiff.data.files) {
+    return changes;
+  }
+
+  for (const file of targetBranchDiff.data.files) {
+    if (!file.patch) {
+      continue;
+    }
+
+    const results = parsePatch({
+      filename: file.filename,
+      patch: file.patch,
+    });
+
+    for (const result of results) {
+      const modifiedFile = {
+        filename: file.filename,
+        sha: file.sha,
+        status: file.status,
+        additions: file.additions,
+        deletions: file.deletions,
+        changes: file.changes,
+        url: file.contents_url,
+        from: result.from,
+        to: result.to,
+      } satisfies ChangeFile;
+
+      changes.push(modifiedFile);
+    }
+  }
+
+  return changes;
+};
+
+/**
+ * 変更ファイルをレビューする
+ *
+ * @param prompts プロンプト生成オブジェクト
+ * @param prContext PRコンテキスト
+ * @param changes 変更ファイルの配列
+ */
+const reviewChanges = async (
+  prompts: Prompts,
+  prContext: PullRequestContext,
+  changes: ChangeFile[],
+): Promise<void> => {
+  for (const change of changes) {
+    const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
+    info(reviewPrompt);
+  }
+};
+
+/**
  * The main function for the action.
  *
  * @returns Resolves when the action is complete.
@@ -45,63 +140,11 @@ export async function run(): Promise<void> {
     const prompts = new Prompts(options);
     prompts.debug();
 
-    const repo = context.repo;
-
-    const pull_request = context.payload.pull_request;
-    const prContext: PullRequestContext = {
-      owner: repo.owner,
-      title: pull_request?.title,
-      description: pull_request?.body,
-      repo: repo.repo,
-      pullRequestNumber: pull_request?.number,
-    };
-
-    const commitId = pull_request?.base?.sha;
-    if (!commitId) {
-      throw new Error("No commit id found");
-    }
-
+    const prContext = getPrContext();
     const octokit = getOctokit(token);
+    const changes = await getChangedFiles(octokit);
 
-    const targetBranchDiff = await octokit.rest.repos.compareCommits({
-      owner: repo.owner,
-      repo: repo.repo,
-      base: pull_request.base.sha,
-      head: pull_request.head.sha,
-    });
-
-    const changes = [];
-    if (targetBranchDiff.data.files) {
-      for (const file of targetBranchDiff.data.files) {
-        if (!file.patch) {
-          continue;
-        }
-        const results = parsePatch({
-          filename: file.filename,
-          patch: file.patch,
-        });
-
-        for (const result of results) {
-          const modifiedFile = {
-            filename: file.filename,
-            sha: file.sha,
-            status: file.status,
-            additions: file.additions,
-            deletions: file.deletions,
-            changes: file.changes,
-            url: file.contents_url,
-            from: result.from,
-            to: result.to,
-          } satisfies ChangeFile;
-          changes.push(modifiedFile);
-        }
-      }
-    }
-
-    for (const change of changes) {
-      const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
-      info(reviewPrompt);
-    }
+    await reviewChanges(prompts, prContext, changes);
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) {

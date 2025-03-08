@@ -34228,6 +34228,82 @@ const getOptions = () => {
 };
 const token = coreExports.getInput("token") || process.env.GITHUB_TOKEN || "";
 /**
+ * PRコンテキストを取得する
+ *
+ * @returns PRコンテキスト
+ */
+const getPrContext = () => {
+    const repo = githubExports.context.repo;
+    const pull_request = githubExports.context.payload.pull_request;
+    return {
+        owner: repo.owner,
+        title: pull_request?.title,
+        description: pull_request?.body,
+        repo: repo.repo,
+        pullRequestNumber: pull_request?.number,
+    };
+};
+/**
+ * 変更ファイルを取得する
+ *
+ * @param octokit GitHubクライアント
+ * @returns 変更ファイルの配列
+ */
+const getChangedFiles = async (octokit) => {
+    const pull_request = githubExports.context.payload.pull_request;
+    const repo = githubExports.context.repo;
+    if (!pull_request?.base?.sha) {
+        throw new Error("No commit id found");
+    }
+    const targetBranchDiff = await octokit.rest.repos.compareCommits({
+        owner: repo.owner,
+        repo: repo.repo,
+        base: pull_request.base.sha,
+        head: pull_request.head.sha,
+    });
+    const changes = [];
+    if (!targetBranchDiff.data.files) {
+        return changes;
+    }
+    for (const file of targetBranchDiff.data.files) {
+        if (!file.patch) {
+            continue;
+        }
+        const results = parsePatch({
+            filename: file.filename,
+            patch: file.patch,
+        });
+        for (const result of results) {
+            const modifiedFile = {
+                filename: file.filename,
+                sha: file.sha,
+                status: file.status,
+                additions: file.additions,
+                deletions: file.deletions,
+                changes: file.changes,
+                url: file.contents_url,
+                from: result.from,
+                to: result.to,
+            };
+            changes.push(modifiedFile);
+        }
+    }
+    return changes;
+};
+/**
+ * 変更ファイルをレビューする
+ *
+ * @param prompts プロンプト生成オブジェクト
+ * @param prContext PRコンテキスト
+ * @param changes 変更ファイルの配列
+ */
+const reviewChanges = async (prompts, prContext, changes) => {
+    for (const change of changes) {
+        const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
+        coreExports.info(reviewPrompt);
+    }
+};
+/**
  * The main function for the action.
  *
  * @returns Resolves when the action is complete.
@@ -34238,56 +34314,10 @@ async function run() {
         options.print();
         const prompts = new Prompts(options);
         prompts.debug();
-        const repo = githubExports.context.repo;
-        const pull_request = githubExports.context.payload.pull_request;
-        const prContext = {
-            owner: repo.owner,
-            title: pull_request?.title,
-            description: pull_request?.body,
-            repo: repo.repo,
-            pullRequestNumber: pull_request?.number,
-        };
-        const commitId = pull_request?.base?.sha;
-        if (!commitId) {
-            throw new Error("No commit id found");
-        }
+        const prContext = getPrContext();
         const octokit = githubExports.getOctokit(token);
-        const targetBranchDiff = await octokit.rest.repos.compareCommits({
-            owner: repo.owner,
-            repo: repo.repo,
-            base: pull_request.base.sha,
-            head: pull_request.head.sha,
-        });
-        const changes = [];
-        if (targetBranchDiff.data.files) {
-            for (const file of targetBranchDiff.data.files) {
-                if (!file.patch) {
-                    continue;
-                }
-                const results = parsePatch({
-                    filename: file.filename,
-                    patch: file.patch,
-                });
-                for (const result of results) {
-                    const modifiedFile = {
-                        filename: file.filename,
-                        sha: file.sha,
-                        status: file.status,
-                        additions: file.additions,
-                        deletions: file.deletions,
-                        changes: file.changes,
-                        url: file.contents_url,
-                        from: result.from,
-                        to: result.to,
-                    };
-                    changes.push(modifiedFile);
-                }
-            }
-        }
-        for (const change of changes) {
-            const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
-            coreExports.info(reviewPrompt);
-        }
+        const changes = await getChangedFiles(octokit);
+        await reviewChanges(prompts, prContext, changes);
     }
     catch (error) {
         // Fail the workflow run if an error occurs
