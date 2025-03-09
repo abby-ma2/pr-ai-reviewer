@@ -2,8 +2,8 @@ import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
 import type { Prompts } from "../prompts.js";
 import type { ChangeFile } from "../types.js";
-import type { ChatBots } from "./index.js";
-export declare class GeminiClient implements ChatBots {
+import type { ChatBot } from "./index.js";
+export declare class GeminiClient implements ChatBot {
     private client;
     private model;
     private options;

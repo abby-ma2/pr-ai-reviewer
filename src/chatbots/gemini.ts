@@ -7,11 +7,11 @@ import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
 import type { Prompts } from "../prompts.js";
 import type { ChangeFile } from "../types.js";
-import type { ChatBots } from "./index.js";
+import type { ChatBot } from "./index.js";
 
 const defaultModel = "gemini-2.0-flash-lite";
 
-export class GeminiClient implements ChatBots {
+export class GeminiClient implements ChatBot {
   private client: GoogleGenerativeAI;
   private model: GenerativeModel;
   private options: Options;

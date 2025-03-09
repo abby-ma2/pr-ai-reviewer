@@ -4,11 +4,11 @@ import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
 import type { Prompts } from "../prompts.js";
 import type { ChangeFile } from "../types.js";
-import type { ChatBots } from "./index.js";
+import type { ChatBot } from "./index.js";
 
 const defaultModel = "claude-3-5-haiku-20241022";
 
-export class ClaudeClient implements ChatBots {
+export class ClaudeClient implements ChatBot {
   private client: Anthropic;
   private model: string;
   private options: Options;

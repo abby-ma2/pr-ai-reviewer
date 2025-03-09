@@ -3,6 +3,11 @@ import type { PullRequestContext } from "./context.js";
 import type { Options } from "./option.js";
 import type { ChangeFile } from "./types.js";
 
+/**
+ * Template for the pull request review prompt.
+ * Contains placeholders for title, description, summary, filename, and patches.
+ * Provides instructions for the AI reviewer on how to format responses.
+ */
 const reviewFileDiff = `## GitHub PR Title
 
 \`$title\`
@@ -101,18 +106,39 @@ LGTM!
 ## Changes made to \`$filename\` for your review
 
 $patches
+
+We will communicate in $language.
 `;
 
+/**
+ * Class responsible for generating and managing prompts used for PR reviews.
+ * Handles the templating of review prompts with contextual information.
+ */
 export class Prompts {
+  /**
+   * Creates a new Prompts instance with the specified options.
+   * @param options - Configuration options for prompts
+   */
   constructor(private options: Options) {
     this.options = options;
   }
 
+  /**
+   * Renders a review prompt for a specific file change in a pull request.
+   * @param ctx - Pull request context containing metadata like title
+   * @param change - File change information with diff content
+   * @returns Formatted review prompt string with all placeholders replaced
+   */
   renderReviewPrompt(ctx: PullRequestContext, change: ChangeFile): string {
-    const prompts = reviewFileDiff.replace("$title", ctx.title);
+    let prompts = reviewFileDiff.replace("$title", ctx.title);
+    prompts = prompts.replace("$language", this.options.language);
     return prompts.replace("$patches", change.renderHunk());
   }
 
+  /**
+   * Outputs debug information about the current options.
+   * Uses the debug function from @actions/core.
+   */
   debug(): void {
     debug(`${this.options}`);
   }

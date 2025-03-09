@@ -4,9 +4,9 @@ import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
 import type { Prompts } from "../prompts.js";
 import type { ChangeFile } from "../types.js";
-import type { ChatBots } from "./index.js";
+import type { ChatBot } from "./index.js";
 
-export class OpenAIClient implements ChatBots {
+export class OpenAIClient implements ChatBot {
   private client: OpenAI;
   private options: Options;
 

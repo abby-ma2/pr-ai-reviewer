@@ -94,23 +94,32 @@ export class PathFilter {
       return true;
     }
 
+    // Track if the path is explicitly included or excluded by any rules
     let included = false;
     let excluded = false;
+    // Track if any inclusion rules exist at all
     let inclusionRuleExists = false;
 
     for (const [rule, exclude] of this.rules) {
+      // Check if the path matches the current rule pattern
       if (minimatch(path, rule)) {
         if (exclude) {
+          // If it's an exclusion rule and matches, mark as excluded
           excluded = true;
         } else {
+          // If it's an inclusion rule and matches, mark as included
           included = true;
         }
       }
+      // Keep track of whether any inclusion rules exist
       if (!exclude) {
         inclusionRuleExists = true;
       }
     }
 
+    // Path is valid if:
+    // 1. No inclusion rules exist OR the path matches at least one inclusion rule
+    // 2. AND the path doesn't match any exclusion rules
     return (!inclusionRuleExists || included) && !excluded;
   }
 }
