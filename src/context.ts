@@ -1,6 +1,3 @@
-import { type ChatBot, createChatBotFromModel } from "./chatbots/index.js";
-import type { Options } from "./option.js";
-
 /**
  * Class that holds context information for a pull request
  * Stores pull request related data and handles chatbot creation
@@ -40,17 +37,5 @@ export class PullRequestContext {
     this.repo = repo;
     this.description = description;
     this.pullRequestNumber = pullRequestNumber;
-  }
-
-  /**
-   * Creates a chatbot with the specified model and options
-   *
-   * @param model The AI model name to use
-   * @param apiKey API key for the model service
-   * @param options Configuration options for the chatbot
-   * @returns A configured ChatBot instance
-   */
-  createChatbot(model: string, apiKey: string, options: Options): ChatBot {
-    return createChatBotFromModel(model, apiKey, options);
   }
 }

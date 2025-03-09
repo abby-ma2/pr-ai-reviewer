@@ -2,8 +2,6 @@ import { debug, info, warning } from "@actions/core";
 import Anthropic from "@anthropic-ai/sdk";
 import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
-import type { Prompts } from "../prompts.js";
-import type { ChangeFile } from "../types.js";
 import type { ChatBot } from "./index.js";
 
 const defaultModel = "claude-3-5-haiku-20241022";
@@ -27,52 +25,39 @@ export class ClaudeClient implements ChatBot {
   }
 
   /**
-   * コード差分をレビューする
-   * @param prompt レビューに使用するプロンプト
-   * @param patch パッチ解析結果
-   * @returns レビューコメント
+   * Review code differences
+   * @param prompt The prompt used for review
+   * @param patch Patch analysis result
+   * @returns Review comment
    */
-  async reviewCode(
-    ctx: PullRequestContext,
-    prompt: Prompts,
-    change: ChangeFile,
-  ): Promise<string> {
+  async reviewCode(ctx: PullRequestContext, prompt: string): Promise<string> {
     if (this.options.disableReview) {
       info("Code review is disabled in options");
       return "";
     }
 
     try {
-      // Claude APIを呼び出す
+      // Call Claude API
       const result = await this.client.messages.create({
         model: this.model,
         system: this.options.systemMessage,
-        messages: [
-          { role: "user", content: prompt.renderReviewPrompt(ctx, change) },
-        ],
+        messages: [{ role: "user", content: prompt }],
         max_tokens: 2000,
         temperature: 0.1,
       });
 
       const reviewComment = result.content[0];
 
-      if (this.options.debug) {
-        debug(`Review for ${change.from.filename}:\n${reviewComment}`);
-      }
-
       return reviewComment.type === "text" ? reviewComment.text : "";
     } catch (error) {
       warning(
-        `Failed to review code for ${change.from.filename}: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to review code for : ${error instanceof Error ? error.message : String(error)}`,
       );
 
-      // リトライロジック
+      // Retry logic
       if (this.options.retries > 0) {
-        info(
-          `Retrying review for ${change.from.filename} (${this.options.retries} retries left)`,
-        );
         this.options.retries--;
-        return this.reviewCode(ctx, prompt, change);
+        return this.reviewCode(ctx, prompt);
       }
 
       return "Failed to review this file due to an API error.";

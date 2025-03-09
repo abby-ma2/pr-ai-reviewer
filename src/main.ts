@@ -2,7 +2,6 @@ import {
   getBooleanInput,
   getInput,
   getMultilineInput,
-  info,
   setFailed,
 } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
@@ -10,6 +9,7 @@ import { PullRequestContext } from "./context.js";
 import { Options } from "./option.js";
 import { parsePatch } from "./patchParser.js";
 import { Prompts } from "./prompts.js";
+import { Reviewer } from "./reviewer.js";
 import { ChangeFile } from "./types.js";
 
 const getOptions = () => {
@@ -110,24 +110,6 @@ const getChangedFiles = async (
 };
 
 /**
- * Reviews the changed files
- *
- * @param prompts Prompt generation object
- * @param prContext PR context
- * @param changes Array of changed files
- */
-const reviewChanges = async (
-  prompts: Prompts,
-  prContext: PullRequestContext,
-  changes: ChangeFile[],
-): Promise<void> => {
-  for (const change of changes) {
-    const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
-    info(reviewPrompt);
-  }
-};
-
-/**
  * The main function for the action.
  *
  * @returns Resolves when the action is complete.
@@ -142,9 +124,11 @@ export async function run(): Promise<void> {
 
     const prContext = getPrContext();
     const octokit = getOctokit(token);
+    const reviewer = new Reviewer(octokit, options);
+    reviewer.debug();
     const changes = await getChangedFiles(octokit);
 
-    await reviewChanges(prompts, prContext, changes);
+    await reviewer.reviewChanges({ prContext, prompts, changes });
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) {
