@@ -33972,6 +33972,30 @@ class PathFilter {
     }
 }
 
+class Hunk {
+    filename;
+    startLine;
+    lineCount;
+    content;
+    branch;
+    commitId;
+    constructor(filename, startLine, lineCount, content, branch, commitId) {
+        this.filename = filename;
+        this.startLine = startLine;
+        this.lineCount = lineCount;
+        this.content = content;
+        this.branch = branch;
+        this.commitId = commitId;
+    }
+}
+class PatchParseResult {
+    from;
+    to;
+    constructor(from, to) {
+        this.from = from;
+        this.to = to;
+    }
+}
 /**
  * parseChunkHeader
  */
@@ -34077,24 +34101,7 @@ const processChunk = (lines, startIndex, filename) => {
         i++;
         lineNo++;
     }
-    const result = {
-        from: {
-            filename,
-            startLine: fromStart,
-            lineCount: fromCount,
-            branch: origBranch,
-            commitId: undefined,
-            content: fromContent,
-        },
-        to: {
-            filename,
-            startLine: toStart,
-            lineCount: toCount,
-            branch: modBranch,
-            commitId: modCommitId,
-            content: toContent,
-        },
-    };
+    const result = new PatchParseResult(new Hunk(filename, fromStart, fromCount, fromContent, origBranch, undefined), new Hunk(filename, toStart, toCount, toContent, modBranch, modCommitId));
     return { result, nextIndex: i };
 };
 const parsePatch = ({ filename, patch, }) => {
@@ -34239,6 +34246,29 @@ class Prompts {
     }
 }
 
+class ChangeFile {
+    filename;
+    sha;
+    status;
+    additions;
+    deletions;
+    changes;
+    url;
+    from;
+    to;
+    constructor(filename, sha, status, additions, deletions, changes, url, from, to) {
+        this.filename = filename;
+        this.sha = sha;
+        this.status = status;
+        this.additions = additions;
+        this.deletions = deletions;
+        this.changes = changes;
+        this.url = url;
+        this.from = from;
+        this.to = to;
+    }
+}
+
 const getOptions = () => {
     return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getInput("max_files"), coreExports.getBooleanInput("review_simple_changes"), coreExports.getBooleanInput("review_comment_lgtm"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_message"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("base_url"), coreExports.getInput("language"));
 };
@@ -34284,18 +34314,8 @@ const getChangedFiles = async (octokit) => {
             patch: file.patch,
         });
         for (const result of results) {
-            const modifiedFile = {
-                filename: file.filename,
-                sha: file.sha,
-                status: file.status,
-                additions: file.additions,
-                deletions: file.deletions,
-                changes: file.changes,
-                url: file.contents_url,
-                from: result.from,
-                to: result.to,
-            };
-            changes.push(modifiedFile);
+            const changeFile = new ChangeFile(file.filename, file.sha, file.status, file.additions, file.deletions, file.changes, file.contents_url, result.from, result.to);
+            changes.push(changeFile);
         }
     }
     return changes;

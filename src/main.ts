@@ -10,7 +10,7 @@ import { PullRequestContext } from "./context.js";
 import { Options } from "./option.js";
 import { parsePatch } from "./patchParser.js";
 import { Prompts } from "./prompts.js";
-import type { ChangeFile } from "./types.js";
+import { ChangeFile } from "./types.js";
 
 const getOptions = () => {
   return new Options(
@@ -90,19 +90,19 @@ const getChangedFiles = async (
     });
 
     for (const result of results) {
-      const modifiedFile = {
-        filename: file.filename,
-        sha: file.sha,
-        status: file.status,
-        additions: file.additions,
-        deletions: file.deletions,
-        changes: file.changes,
-        url: file.contents_url,
-        from: result.from,
-        to: result.to,
-      } satisfies ChangeFile;
+      const changeFile = new ChangeFile(
+        file.filename,
+        file.sha,
+        file.status,
+        file.additions,
+        file.deletions,
+        file.changes,
+        file.contents_url,
+        result.from,
+        result.to,
+      );
 
-      changes.push(modifiedFile);
+      changes.push(changeFile);
     }
   }
 
