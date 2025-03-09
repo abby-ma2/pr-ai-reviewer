@@ -5,6 +5,5 @@ export declare class Prompts {
     private options;
     constructor(options: Options);
     renderReviewPrompt(ctx: PullRequestContext, change: ChangeFile): string;
-    renderHunk(change: ChangeFile): string;
     debug(): void;
 }

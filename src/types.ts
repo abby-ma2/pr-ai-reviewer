@@ -12,4 +12,10 @@ export class ChangeFile {
     public from: Hunk,
     public to: Hunk,
   ) {}
+  renderHunk(): string {
+    const fromContent = this.from.content.join("\n");
+    const toContent = this.to.content.join("\n");
+
+    return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``;
+  }
 }
