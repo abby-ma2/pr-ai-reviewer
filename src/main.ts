@@ -6,7 +6,7 @@ import {
   setFailed,
 } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
-import type { PullRequestContext } from "./context.js";
+import { PullRequestContext } from "./context.js";
 import { Options } from "./option.js";
 import { parsePatch } from "./patchParser.js";
 import { Prompts } from "./prompts.js";
@@ -33,28 +33,28 @@ const getOptions = () => {
 const token = getInput("token") || process.env.GITHUB_TOKEN || "";
 
 /**
- * PRコンテキストを取得する
+ * Gets the PR context
  *
- * @returns PRコンテキスト
+ * @returns PR context
  */
 const getPrContext = (): PullRequestContext => {
   const repo = context.repo;
   const pull_request = context.payload.pull_request;
 
-  return {
-    owner: repo.owner,
-    title: pull_request?.title,
-    description: pull_request?.body,
-    repo: repo.repo,
-    pullRequestNumber: pull_request?.number,
-  };
+  return new PullRequestContext(
+    repo.owner,
+    pull_request?.title,
+    repo.repo,
+    pull_request?.body,
+    pull_request?.number,
+  );
 };
 
 /**
- * 変更ファイルを取得する
+ * Gets the changed files
  *
- * @param octokit GitHubクライアント
- * @returns 変更ファイルの配列
+ * @param octokit GitHub client
+ * @returns Array of changed files
  */
 const getChangedFiles = async (
   octokit: ReturnType<typeof getOctokit>,
@@ -110,11 +110,11 @@ const getChangedFiles = async (
 };
 
 /**
- * 変更ファイルをレビューする
+ * Reviews the changed files
  *
- * @param prompts プロンプト生成オブジェクト
- * @param prContext PRコンテキスト
- * @param changes 変更ファイルの配列
+ * @param prompts Prompt generation object
+ * @param prContext PR context
+ * @param changes Array of changed files
  */
 const reviewChanges = async (
   prompts: Prompts,

@@ -31805,6 +31805,22 @@ function requireGithub () {
 
 var githubExports = requireGithub();
 
+class PullRequestContext {
+    owner;
+    title;
+    description;
+    summary;
+    repo;
+    pullRequestNumber;
+    constructor(owner, title, repo, description, pullRequestNumber) {
+        this.owner = owner;
+        this.title = title;
+        this.repo = repo;
+        this.description = description;
+        this.pullRequestNumber = pullRequestNumber;
+    }
+}
+
 var balancedMatch;
 var hasRequiredBalancedMatch;
 
@@ -34228,26 +34244,20 @@ const getOptions = () => {
 };
 const token = coreExports.getInput("token") || process.env.GITHUB_TOKEN || "";
 /**
- * PRコンテキストを取得する
+ * Gets the PR context
  *
- * @returns PRコンテキスト
+ * @returns PR context
  */
 const getPrContext = () => {
     const repo = githubExports.context.repo;
     const pull_request = githubExports.context.payload.pull_request;
-    return {
-        owner: repo.owner,
-        title: pull_request?.title,
-        description: pull_request?.body,
-        repo: repo.repo,
-        pullRequestNumber: pull_request?.number,
-    };
+    return new PullRequestContext(repo.owner, pull_request?.title, repo.repo, pull_request?.body, pull_request?.number);
 };
 /**
- * 変更ファイルを取得する
+ * Gets the changed files
  *
- * @param octokit GitHubクライアント
- * @returns 変更ファイルの配列
+ * @param octokit GitHub client
+ * @returns Array of changed files
  */
 const getChangedFiles = async (octokit) => {
     const pull_request = githubExports.context.payload.pull_request;
@@ -34291,11 +34301,11 @@ const getChangedFiles = async (octokit) => {
     return changes;
 };
 /**
- * 変更ファイルをレビューする
+ * Reviews the changed files
  *
- * @param prompts プロンプト生成オブジェクト
- * @param prContext PRコンテキスト
- * @param changes 変更ファイルの配列
+ * @param prompts Prompt generation object
+ * @param prContext PR context
+ * @param changes Array of changed files
  */
 const reviewChanges = async (prompts, prContext, changes) => {
     for (const change of changes) {
