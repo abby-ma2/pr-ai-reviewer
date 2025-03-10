@@ -35,11 +35,11 @@ export class OpenAIClient implements ChatBot {
       return "";
     }
 
-    // ファイルタイプを判断（拡張子から）
+    // Determine file type (from extension)
     // const fileExtension = patch.original.filename.split(".").pop() || "";      const fileType = this.getFileType(fileExtension);
 
     try {
-      // OpenAI APIを呼び出す
+      // Call the OpenAI API
       const response = await this.client.chat.completions.create({
         model: this.options.model,
         messages: [{ role: "user", content: prompt }],
@@ -55,7 +55,7 @@ export class OpenAIClient implements ChatBot {
         `Failed to review code for : ${error instanceof Error ? error.message : String(error)}`,
       );
 
-      // リトライロジック
+      // Retry logic
       if (this.options.retries > 0) {
         this.options.retries--;
         return this.reviewCode(ctx, prompt);

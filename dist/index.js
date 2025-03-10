@@ -39318,7 +39318,7 @@ class GeminiClient {
             return "";
         }
         try {
-            // Gemini APIを呼び出す
+            // Call the Gemini API
             const result = await this.model.generateContent({
                 contents: [
                     {
@@ -39336,7 +39336,7 @@ class GeminiClient {
         }
         catch (error) {
             coreExports.warning(`Failed to review code for: ${error instanceof Error ? error.message : String(error)}`);
-            // リトライロジック
+            // Retry logic
             if (this.options.retries > 0) {
                 this.options.retries--;
                 return this.reviewCode(ctx, prompt);
@@ -44823,10 +44823,10 @@ class OpenAIClient {
             coreExports.info("Code review is disabled in options");
             return "";
         }
-        // ファイルタイプを判断（拡張子から）
+        // Determine file type (from extension)
         // const fileExtension = patch.original.filename.split(".").pop() || "";      const fileType = this.getFileType(fileExtension);
         try {
-            // OpenAI APIを呼び出す
+            // Call the OpenAI API
             const response = await this.client.chat.completions.create({
                 model: this.options.model,
                 messages: [{ role: "user", content: prompt }],
@@ -44838,7 +44838,7 @@ class OpenAIClient {
         }
         catch (error) {
             coreExports.warning(`Failed to review code for : ${error instanceof Error ? error.message : String(error)}`);
-            // リトライロジック
+            // Retry logic
             if (this.options.retries > 0) {
                 this.options.retries--;
                 return this.reviewCode(ctx, prompt);
@@ -44852,7 +44852,6 @@ class OpenAIClient {
 /**
  * Factory function to create appropriate ChatBot implementation based on model name
  * @param modelName - Name of the model to use (prefixed with provider name)
- * @param apiKey - API key for the service
  * @param options - Configuration options
  * @returns ChatBot implementation for the specified model
  * @throws Error if model is not supported
@@ -44864,7 +44863,7 @@ const createChatBotFromModel = (modelName, options) => {
     if (modelName.startsWith("gemini/")) {
         return new GeminiClient(options);
     }
-    if (modelName.startsWith("claude/")) {
+    if (modelName.startsWith("anthropic/")) {
         return new ClaudeClient(options);
     }
     throw new Error(`Unsupported model: ${modelName}`);

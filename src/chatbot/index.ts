@@ -13,8 +13,7 @@ export interface ChatBot {
   /**
    * Review code changes and provide feedback
    * @param ctx - Pull request context containing repository information
-   * @param prompt - Prompt templates to use for the review
-   * @param change - File changes to be reviewed
+   * @param prompt - The review prompt containing instructions and context
    * @returns Promise resolving to review comments as string
    */
   reviewCode(ctx: PullRequestContext, prompt: string): Promise<string>;
@@ -23,7 +22,6 @@ export interface ChatBot {
 /**
  * Factory function to create appropriate ChatBot implementation based on model name
  * @param modelName - Name of the model to use (prefixed with provider name)
- * @param apiKey - API key for the service
  * @param options - Configuration options
  * @returns ChatBot implementation for the specified model
  * @throws Error if model is not supported
@@ -38,7 +36,7 @@ export const createChatBotFromModel = (
   if (modelName.startsWith("gemini/")) {
     return new GeminiClient(options);
   }
-  if (modelName.startsWith("claude/")) {
+  if (modelName.startsWith("anthropic/")) {
     return new ClaudeClient(options);
   }
 

@@ -41,7 +41,7 @@ export class GeminiClient implements ChatBot {
     }
 
     try {
-      // Gemini APIを呼び出す
+      // Call the Gemini API
       const result = await this.model.generateContent({
         contents: [
           {
@@ -63,7 +63,7 @@ export class GeminiClient implements ChatBot {
         `Failed to review code for: ${error instanceof Error ? error.message : String(error)}`,
       );
 
-      // リトライロジック
+      // Retry logic
       if (this.options.retries > 0) {
         this.options.retries--;
         return this.reviewCode(ctx, prompt);
