@@ -37784,7 +37784,7 @@ Anthropic.Beta = Beta$1;
 const { HUMAN_PROMPT, AI_PROMPT } = Anthropic;
 
 const defaultModel$1 = "claude-3-5-haiku-20241022";
-const apiKey$2 = coreExports.getInput("AnthropicApiKey") || process.env.ANTHROPIC_API_KEY || "";
+const apiKey$2 = process.env.ANTHROPIC_API_KEY || "";
 class ClaudeClient {
     client;
     model;
@@ -39290,7 +39290,7 @@ class GoogleGenerativeAI {
 }
 
 const defaultModel = "gemini-2.0-flash-lite";
-const apiKey$1 = coreExports.getInput("GoogleApiKey") || process.env.GOOGLE_API_KEY || "";
+const apiKey$1 = process.env.GOOGLE_API_KEY || "";
 class GeminiClient {
     client;
     model;
@@ -44797,7 +44797,7 @@ OpenAI.Batches = Batches;
 OpenAI.BatchesPage = BatchesPage;
 OpenAI.Uploads = Uploads;
 
-const apiKey = coreExports.getInput("OpenAIApiKey") || process.env.OPENAI_API_KEY || "";
+const apiKey = process.env.OPENAI_API_KEY || "";
 class OpenAIClient {
     client;
     options;

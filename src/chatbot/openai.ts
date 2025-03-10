@@ -1,10 +1,10 @@
-import { debug, getInput, info, warning } from "@actions/core";
+import { debug, info, warning } from "@actions/core";
 import OpenAI from "openai";
 import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
 import { type ChatBot, getModelName } from "./index.js";
 
-const apiKey = getInput("OpenAIApiKey") || process.env.OPENAI_API_KEY || "";
+const apiKey = process.env.OPENAI_API_KEY || "";
 
 export class OpenAIClient implements ChatBot {
   private client: OpenAI;

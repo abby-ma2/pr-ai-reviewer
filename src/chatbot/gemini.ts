@@ -1,4 +1,4 @@
-import { debug, getInput, info, warning } from "@actions/core";
+import { debug, info, warning } from "@actions/core";
 import {
   type GenerativeModel,
   GoogleGenerativeAI,
@@ -8,7 +8,7 @@ import type { Options } from "../option.js";
 import { type ChatBot, getModelName } from "./index.js";
 
 const defaultModel = "gemini-2.0-flash-lite";
-const apiKey = getInput("GoogleApiKey") || process.env.GOOGLE_API_KEY || "";
+const apiKey = process.env.GOOGLE_API_KEY || "";
 
 export class GeminiClient implements ChatBot {
   private client: GoogleGenerativeAI;
