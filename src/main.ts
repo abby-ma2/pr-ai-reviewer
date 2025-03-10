@@ -3,6 +3,7 @@ import {
   getInput,
   getMultilineInput,
   debug,
+  info,
   setFailed,
 } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
@@ -131,6 +132,7 @@ export async function run(): Promise<void> {
     const changes = await getChangedFiles(octokit);
 
     await reviewer.reviewChanges({ prContext, prompts, changes });
+    info("test");
   } catch (error) {
     debug("error");
     // Fail the workflow run if an error occurs

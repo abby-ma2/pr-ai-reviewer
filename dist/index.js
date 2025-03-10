@@ -45014,8 +45014,10 @@ async function run() {
         const reviewer = new Reviewer(octokit, options);
         const changes = await getChangedFiles(octokit);
         await reviewer.reviewChanges({ prContext, prompts, changes });
+        coreExports.info("test");
     }
     catch (error) {
+        coreExports.debug("error");
         // Fail the workflow run if an error occurs
         if (error instanceof Error) {
             coreExports.setFailed(error.message);
