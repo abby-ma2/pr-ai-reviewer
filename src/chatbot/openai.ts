@@ -2,7 +2,7 @@ import { debug, getInput, info, warning } from "@actions/core";
 import OpenAI from "openai";
 import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
-import type { ChatBot } from "./index.js";
+import { type ChatBot, getModelName } from "./index.js";
 
 const apiKey = getInput("OpenAIApiKey") || process.env.OPENAI_API_KEY || "";
 
@@ -41,7 +41,7 @@ export class OpenAIClient implements ChatBot {
     try {
       // Call the OpenAI API
       const response = await this.client.chat.completions.create({
-        model: this.options.model,
+        model: getModelName(this.options.model),
         messages: [{ role: "user", content: prompt }],
         temperature: 0.1,
         // max_tokens: 2000,

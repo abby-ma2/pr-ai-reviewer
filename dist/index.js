@@ -37794,7 +37794,7 @@ class ClaudeClient {
         this.client = new Anthropic({
             apiKey: apiKey$2,
         });
-        this.model = options.model || defaultModel$1;
+        this.model = getModelName(options.model) || defaultModel$1;
         if (this.options.debug) {
             coreExports.debug("Claude client initialized");
             coreExports.debug(`Using model: ${this.model}`);
@@ -39299,7 +39299,7 @@ class GeminiClient {
         this.options = options;
         this.client = new GoogleGenerativeAI(apiKey$1);
         this.model = this.client.getGenerativeModel({
-            model: options.model || defaultModel,
+            model: getModelName(options.model) || defaultModel,
         });
         if (this.options.debug) {
             coreExports.debug("Gemini client initialized");
@@ -44828,7 +44828,7 @@ class OpenAIClient {
         try {
             // Call the OpenAI API
             const response = await this.client.chat.completions.create({
-                model: this.options.model,
+                model: getModelName(this.options.model),
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.1,
                 // max_tokens: 2000,
@@ -44849,6 +44849,15 @@ class OpenAIClient {
 }
 
 // This module defines the ChatBot interface and factory function to create chatbot instances
+/**
+ * Extract the model name from a full model identifier string
+ * @param name - Full model identifier in "provider/model" format
+ * @returns The model portion of the identifier, or the original string if no provider prefix
+ */
+const getModelName = (name) => {
+    const parts = name.split("/");
+    return parts.length > 1 ? parts[1] : name;
+};
 /**
  * Factory function to create appropriate ChatBot implementation based on model name
  * @param modelName - Name of the model to use (prefixed with provider name)
@@ -44897,8 +44906,9 @@ class Reviewer {
     async reviewChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {
             const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
-            coreExports.debug(reviewPrompt);
-            this.chatbot.reviewCode(prContext, reviewPrompt);
+            coreExports.info(reviewPrompt);
+            const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
+            coreExports.info(reviewComment);
         }
     }
     /**

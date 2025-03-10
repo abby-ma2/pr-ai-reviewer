@@ -1,4 +1,4 @@
-import { debug } from "@actions/core";
+import { debug, info } from "@actions/core";
 import type { GitHub } from "@actions/github/lib/utils.js";
 import { type ChatBot, createChatBotFromModel } from "./chatbot/index.js";
 import type { PullRequestContext } from "./context.js";
@@ -48,8 +48,12 @@ export class Reviewer {
   }) {
     for (const change of changes) {
       const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
-      debug(reviewPrompt);
-      this.chatbot.reviewCode(prContext, reviewPrompt);
+      info(reviewPrompt);
+      const reviewComment = await this.chatbot.reviewCode(
+        prContext,
+        reviewPrompt,
+      );
+      info(reviewComment);
     }
   }
 
