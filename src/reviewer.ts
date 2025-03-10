@@ -52,7 +52,9 @@ export class Reviewer {
         prContext,
         reviewPrompt,
       );
+      info("===============================================");
       info(reviewComment);
+      info("===============================================");
     }
   }
 

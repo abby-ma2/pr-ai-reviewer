@@ -44909,7 +44909,9 @@ class Reviewer {
         for (const change of changes) {
             const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
             const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
+            coreExports.info("===============================================");
             coreExports.info(reviewComment);
+            coreExports.info("===============================================");
         }
     }
     /**
@@ -45014,8 +45016,10 @@ async function run() {
         const reviewer = new Reviewer(octokit, options);
         const changes = await getChangedFiles(octokit);
         await reviewer.reviewChanges({ prContext, prompts, changes });
+        coreExports.info("test");
     }
     catch (error) {
+        coreExports.debug("error");
         // Fail the workflow run if an error occurs
         if (error instanceof Error) {
             coreExports.setFailed(error.message);
