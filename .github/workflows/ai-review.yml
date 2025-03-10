@@ -31,5 +31,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           debug: true
+          model: "google/gemini-2.0-flash-exp"
           review_comment_lgtm: false
  
