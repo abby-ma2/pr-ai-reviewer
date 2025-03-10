@@ -2,6 +2,7 @@ import {
   getBooleanInput,
   getInput,
   getMultilineInput,
+  debug,
   setFailed,
 } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
@@ -153,6 +154,7 @@ export async function run(): Promise<void> {
       changes,
     });
   } catch (error) {
+    debug("error");
     // Fail the workflow run if an error occurs
     if (error instanceof Error) {
       setFailed(error.message);
