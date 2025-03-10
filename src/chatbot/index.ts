@@ -43,7 +43,7 @@ export const createChatBotFromModel = (
   if (modelName.startsWith("openai/")) {
     return new OpenAIClient(options);
   }
-  if (modelName.startsWith("gemini/")) {
+  if (modelName.startsWith("google/")) {
     return new GeminiClient(options);
   }
   if (modelName.startsWith("anthropic/")) {
