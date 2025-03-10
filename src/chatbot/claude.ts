@@ -1,17 +1,19 @@
-import { debug, info, warning } from "@actions/core";
+import { debug, getInput, info, warning } from "@actions/core";
 import Anthropic from "@anthropic-ai/sdk";
 import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
 import type { ChatBot } from "./index.js";
 
 const defaultModel = "claude-3-5-haiku-20241022";
+const apiKey =
+  getInput("AnthropicApiKey") || process.env.ANTHROPIC_API_KEY || "";
 
 export class ClaudeClient implements ChatBot {
   private client: Anthropic;
   private model: string;
   private options: Options;
 
-  constructor(apiKey: string, options: Options) {
+  constructor(options: Options) {
     this.options = options;
     this.client = new Anthropic({
       apiKey: apiKey,

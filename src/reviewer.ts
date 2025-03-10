@@ -1,12 +1,10 @@
-import { debug, getInput } from "@actions/core";
+import { debug } from "@actions/core";
 import type { GitHub } from "@actions/github/lib/utils.js";
 import { type ChatBot, createChatBotFromModel } from "./chatbot/index.js";
 import type { PullRequestContext } from "./context.js";
 import type { Options } from "./option.js";
 import type { Prompts } from "./prompts.js";
 import type { ChangeFile } from "./types.js";
-
-const apiKey = getInput("apiKey") || process.env.API_KEY || "";
 
 /**
  * Reviewer class responsible for performing code reviews using a chatbot.
@@ -36,11 +34,7 @@ export class Reviewer {
 
     this.options = options;
 
-    this.chatbot = createChatBotFromModel(
-      this.options.model,
-      apiKey,
-      this.options,
-    );
+    this.chatbot = createChatBotFromModel(this.options.model, this.options);
   }
 
   async reviewChanges({

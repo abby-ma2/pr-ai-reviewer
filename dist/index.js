@@ -37784,14 +37784,15 @@ Anthropic.Beta = Beta$1;
 const { HUMAN_PROMPT, AI_PROMPT } = Anthropic;
 
 const defaultModel$1 = "claude-3-5-haiku-20241022";
+const apiKey$2 = coreExports.getInput("AnthropicApiKey") || process.env.ANTHROPIC_API_KEY || "";
 class ClaudeClient {
     client;
     model;
     options;
-    constructor(apiKey, options) {
+    constructor(options) {
         this.options = options;
         this.client = new Anthropic({
-            apiKey: apiKey,
+            apiKey: apiKey$2,
         });
         this.model = options.model || defaultModel$1;
         if (this.options.debug) {
@@ -39289,13 +39290,14 @@ class GoogleGenerativeAI {
 }
 
 const defaultModel = "gemini-2.0-flash-lite";
+const apiKey$1 = coreExports.getInput("GoogleApiKey") || process.env.GOOGLE_API_KEY || "";
 class GeminiClient {
     client;
     model;
     options;
-    constructor(apiKey, options) {
+    constructor(options) {
         this.options = options;
-        this.client = new GoogleGenerativeAI(apiKey);
+        this.client = new GoogleGenerativeAI(apiKey$1);
         this.model = this.client.getGenerativeModel({
             model: options.model || defaultModel,
         });
@@ -44795,10 +44797,11 @@ OpenAI.Batches = Batches;
 OpenAI.BatchesPage = BatchesPage;
 OpenAI.Uploads = Uploads;
 
+const apiKey = coreExports.getInput("OpenAIApiKey") || process.env.OPENAI_API_KEY || "";
 class OpenAIClient {
     client;
     options;
-    constructor(apiKey, options) {
+    constructor(options) {
         this.options = options;
         this.client = new OpenAI({
             apiKey: apiKey,
@@ -44854,20 +44857,19 @@ class OpenAIClient {
  * @returns ChatBot implementation for the specified model
  * @throws Error if model is not supported
  */
-const createChatBotFromModel = (modelName, apiKey, options) => {
+const createChatBotFromModel = (modelName, options) => {
     if (modelName.startsWith("openai/")) {
-        return new OpenAIClient(apiKey, options);
+        return new OpenAIClient(options);
     }
     if (modelName.startsWith("gemini/")) {
-        return new GeminiClient(apiKey, options);
+        return new GeminiClient(options);
     }
     if (modelName.startsWith("claude/")) {
-        return new ClaudeClient(apiKey, options);
+        return new ClaudeClient(options);
     }
     throw new Error(`Unsupported model: ${modelName}`);
 };
 
-const apiKey = coreExports.getInput("apiKey") || process.env.API_KEY || "";
 /**
  * Reviewer class responsible for performing code reviews using a chatbot.
  * It initializes with configuration options and creates the appropriate chatbot instance.
@@ -44891,7 +44893,7 @@ class Reviewer {
     constructor(octokit, options) {
         this.octokit = octokit;
         this.options = options;
-        this.chatbot = createChatBotFromModel(this.options.model, apiKey, this.options);
+        this.chatbot = createChatBotFromModel(this.options.model, this.options);
     }
     async reviewChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {

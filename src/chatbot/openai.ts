@@ -1,14 +1,16 @@
-import { debug, info, warning } from "@actions/core";
+import { debug, getInput, info, warning } from "@actions/core";
 import OpenAI from "openai";
 import type { PullRequestContext } from "../context.js";
 import type { Options } from "../option.js";
 import type { ChatBot } from "./index.js";
 
+const apiKey = getInput("OpenAIApiKey") || process.env.OPENAI_API_KEY || "";
+
 export class OpenAIClient implements ChatBot {
   private client: OpenAI;
   private options: Options;
 
-  constructor(apiKey: string, options: Options) {
+  constructor(options: Options) {
     this.options = options;
     this.client = new OpenAI({
       apiKey: apiKey,

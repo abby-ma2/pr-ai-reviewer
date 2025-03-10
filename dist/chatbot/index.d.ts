@@ -21,4 +21,4 @@ export interface ChatBot {
  * @returns ChatBot implementation for the specified model
  * @throws Error if model is not supported
  */
-export declare const createChatBotFromModel: (modelName: string, apiKey: string, options: Options) => ChatBot;
+export declare const createChatBotFromModel: (modelName: string, options: Options) => ChatBot;

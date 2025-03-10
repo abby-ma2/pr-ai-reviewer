@@ -4,7 +4,7 @@ import type { ChatBot } from "./index.js";
 export declare class OpenAIClient implements ChatBot {
     private client;
     private options;
-    constructor(apiKey: string, options: Options);
+    constructor(options: Options);
     /**
      * Review code changes and provide feedback
      * @param ctx - Pull request context

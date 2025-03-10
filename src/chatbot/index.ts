@@ -30,17 +30,16 @@ export interface ChatBot {
  */
 export const createChatBotFromModel = (
   modelName: string,
-  apiKey: string,
   options: Options,
 ): ChatBot => {
   if (modelName.startsWith("openai/")) {
-    return new OpenAIClient(apiKey, options);
+    return new OpenAIClient(options);
   }
   if (modelName.startsWith("gemini/")) {
-    return new GeminiClient(apiKey, options);
+    return new GeminiClient(options);
   }
   if (modelName.startsWith("claude/")) {
-    return new ClaudeClient(apiKey, options);
+    return new ClaudeClient(options);
   }
 
   throw new Error(`Unsupported model: ${modelName}`);

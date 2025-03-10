@@ -5,7 +5,7 @@ export declare class ClaudeClient implements ChatBot {
     private client;
     private model;
     private options;
-    constructor(apiKey: string, options: Options);
+    constructor(options: Options);
     /**
      * Review code differences
      * @param prompt The prompt used for review
