@@ -34,5 +34,6 @@ jobs:
         with:
           debug: true
           model: "google/gemini-2.0-flash-exp"
+          language: "japanese"
           review_comment_lgtm: false
  
