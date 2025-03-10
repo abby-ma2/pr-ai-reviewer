@@ -4,17 +4,19 @@
  */
 export class PullRequestContext {
   /** Repository owner name */
-  owner: string;
+  public owner: string;
   /** Pull request title */
-  title: string;
+  public title: string;
   /** Pull request description (optional) */
-  description?: string;
+  public description?: string;
   /** Summary of the pull request (optional) */
-  summary?: string;
+  public summary?: string;
   /** Repository name */
-  repo: string;
+  public repo: string;
   /** Pull request number (optional) */
-  pullRequestNumber?: number;
+  public pullRequestNumber?: number;
+
+  public commentId?: string;
 
   /**
    * Creates an instance of PullRequestContext
@@ -31,11 +33,13 @@ export class PullRequestContext {
     repo: string,
     description?: string,
     pullRequestNumber?: number,
+    commentId?: string,
   ) {
     this.owner = owner;
     this.title = title;
     this.repo = repo;
     this.description = description;
     this.pullRequestNumber = pullRequestNumber;
+    this.commentId = commentId;
   }
 }

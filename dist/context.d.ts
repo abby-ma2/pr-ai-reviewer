@@ -15,6 +15,7 @@ export declare class PullRequestContext {
     repo: string;
     /** Pull request number (optional) */
     pullRequestNumber?: number;
+    commentId?: string;
     /**
      * Creates an instance of PullRequestContext
      *
@@ -24,5 +25,5 @@ export declare class PullRequestContext {
      * @param description Pull request description (optional)
      * @param pullRequestNumber Pull request number (optional)
      */
-    constructor(owner: string, title: string, repo: string, description?: string, pullRequestNumber?: number);
+    constructor(owner: string, title: string, repo: string, description?: string, pullRequestNumber?: number, commentId?: string);
 }

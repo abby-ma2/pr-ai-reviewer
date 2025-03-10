@@ -31822,6 +31822,7 @@ class PullRequestContext {
     repo;
     /** Pull request number (optional) */
     pullRequestNumber;
+    commentId;
     /**
      * Creates an instance of PullRequestContext
      *
@@ -31831,12 +31832,13 @@ class PullRequestContext {
      * @param description Pull request description (optional)
      * @param pullRequestNumber Pull request number (optional)
      */
-    constructor(owner, title, repo, description, pullRequestNumber) {
+    constructor(owner, title, repo, description, pullRequestNumber, commentId) {
         this.owner = owner;
         this.title = title;
         this.repo = repo;
         this.description = description;
         this.pullRequestNumber = pullRequestNumber;
+        this.commentId = commentId;
     }
 }
 
@@ -44950,7 +44952,7 @@ class ChangeFile {
 const getOptions = () => {
     return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getInput("max_files"), coreExports.getBooleanInput("review_simple_changes"), coreExports.getBooleanInput("review_comment_lgtm"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_message"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("base_url"), coreExports.getInput("language"));
 };
-const token = coreExports.getInput("token") || process.env.GITHUB_TOKEN || "";
+const token = process.env.GITHUB_TOKEN || "";
 /**
  * Gets the PR context
  *
@@ -44959,7 +44961,7 @@ const token = coreExports.getInput("token") || process.env.GITHUB_TOKEN || "";
 const getPrContext = () => {
     const repo = githubExports.context.repo;
     const pull_request = githubExports.context.payload.pull_request;
-    return new PullRequestContext(repo.owner, pull_request?.title, repo.repo, pull_request?.body, pull_request?.number);
+    return new PullRequestContext(repo.owner, pull_request?.title, repo.repo, pull_request?.body, pull_request?.number, pull_request?.head?.sha);
 };
 /**
  * Gets the changed files

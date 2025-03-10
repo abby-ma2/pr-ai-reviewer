@@ -30,7 +30,7 @@ const getOptions = () => {
   );
 };
 
-const token = getInput("token") || process.env.GITHUB_TOKEN || "";
+const token = process.env.GITHUB_TOKEN || "";
 
 /**
  * Gets the PR context
@@ -47,6 +47,7 @@ const getPrContext = (): PullRequestContext => {
     repo.repo,
     pull_request?.body,
     pull_request?.number,
+    pull_request?.head?.sha,
   );
 };
 
