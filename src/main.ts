@@ -117,15 +117,15 @@ const getChangedFiles = async (
 export async function run(): Promise<void> {
   try {
     const options = getOptions();
-    options.print();
 
     const prompts = new Prompts(options);
-    prompts.debug();
 
     const prContext = getPrContext();
+
     const octokit = getOctokit(token);
+
     const reviewer = new Reviewer(octokit, options);
-    reviewer.debug();
+
     const changes = await getChangedFiles(octokit);
 
     await reviewer.reviewChanges({ prContext, prompts, changes });

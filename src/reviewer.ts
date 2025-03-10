@@ -48,7 +48,6 @@ export class Reviewer {
   }) {
     for (const change of changes) {
       const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
-      info(reviewPrompt);
       const reviewComment = await this.chatbot.reviewCode(
         prContext,
         reviewPrompt,

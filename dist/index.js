@@ -44906,7 +44906,6 @@ class Reviewer {
     async reviewChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {
             const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
-            coreExports.info(reviewPrompt);
             const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
             coreExports.info(reviewComment);
         }
@@ -45007,13 +45006,10 @@ const getChangedFiles = async (octokit) => {
 async function run() {
     try {
         const options = getOptions();
-        options.print();
         const prompts = new Prompts(options);
-        prompts.debug();
         const prContext = getPrContext();
         const octokit = githubExports.getOctokit(token);
         const reviewer = new Reviewer(octokit, options);
-        reviewer.debug();
         const changes = await getChangedFiles(octokit);
         await reviewer.reviewChanges({ prContext, prompts, changes });
     }
