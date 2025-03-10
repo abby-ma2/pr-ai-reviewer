@@ -44909,7 +44909,9 @@ class Reviewer {
         for (const change of changes) {
             const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
             const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
+            coreExports.info("===============================================");
             coreExports.info(reviewComment);
+            coreExports.info("===============================================");
         }
     }
     /**
