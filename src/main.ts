@@ -1,8 +1,9 @@
 import {
+  debug,
   getBooleanInput,
   getInput,
   getMultilineInput,
-  debug,
+  info,
   setFailed,
 } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
@@ -153,6 +154,8 @@ export async function run(): Promise<void> {
       prompts,
       changes,
     });
+
+    info("Done");
   } catch (error) {
     debug("error");
     // Fail the workflow run if an error occurs

@@ -45257,8 +45257,10 @@ async function run() {
             prompts,
             changes,
         });
+        coreExports.info("Done");
     }
     catch (error) {
+        coreExports.debug("error");
         // Fail the workflow run if an error occurs
         if (error instanceof Error) {
             coreExports.setFailed(error.message);
