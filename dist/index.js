@@ -34260,8 +34260,9 @@ LGTM!
 ## Changes made to \`$filename\` for your review
 
 $patches
-
-We will communicate in $language.
+`;
+const defaultFooter = `
+IMPORTANT: We will communicate in $language.
 `;
 /**
  * Class responsible for generating and managing prompts used for PR reviews.
@@ -34269,24 +34270,49 @@ We will communicate in $language.
  */
 class Prompts {
     options;
+    footer;
     /**
      * Creates a new Prompts instance with the specified options.
      * @param options - Configuration options for prompts
+     * @param footer - Footer text to append to prompts (defaults to defaultFooter)
      */
-    constructor(options) {
+    constructor(options, footer = defaultFooter) {
         this.options = options;
+        this.footer = footer;
         this.options = options;
     }
     /**
      * Renders a review prompt for a specific file change in a pull request.
-     * @param ctx - Pull request context containing metadata like title
+     * @param ctx - Pull request context containing metadata like title and description
      * @param change - File change information with diff content
      * @returns Formatted review prompt string with all placeholders replaced
      */
     renderReviewPrompt(ctx, change) {
-        let prompts = reviewFileDiff.replace("$title", ctx.title);
-        prompts = prompts.replace("$language", this.options.language);
-        return prompts.replace("$patches", change.renderHunk());
+        const data = {
+            title: ctx.title,
+            description: ctx.description || "",
+            filename: change.filename || "",
+            language: this.options.language || "",
+            patches: change.renderHunk(),
+        };
+        return this.renderTemplate(reviewFileDiff, data);
+    }
+    /**
+     * Renders a template string by replacing placeholders with provided values.
+     * @param template - Template string containing placeholders in the format $key or ${key}
+     * @param values - Object containing key-value pairs for placeholder replacement
+     * @returns Formatted string with all placeholders replaced and footer appended
+     */
+    renderTemplate(template, values) {
+        // add footer
+        let result = `${template}\n\n---\n\n${this.footer}\n`;
+        for (const [key, value] of Object.entries(values)) {
+            const placeholder1 = `$${key}`;
+            const placeholder2 = `\${${key}}`;
+            result = result.split(placeholder1).join(value);
+            result = result.split(placeholder2).join(value);
+        }
+        return result;
     }
     /**
      * Outputs debug information about the current options.
@@ -44908,8 +44934,10 @@ class Reviewer {
     async reviewChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {
             const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
+            coreExports.info(`Prompt: ${reviewPrompt}\n`);
             const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
-            coreExports.info(reviewComment);
+            const reviews = parseReviewComment(reviewComment);
+            coreExports.info(`Review: ${JSON.stringify(reviews, null, 2)}`);
         }
     }
     /**
@@ -44918,8 +44946,38 @@ class Reviewer {
     debug() {
         coreExports.debug(`${this.options}`);
         coreExports.debug(`${this.chatbot}`);
+        coreExports.debug(`${this.octokit}`);
     }
 }
+const parseReviewComment = (reviewComment) => {
+    // 空のコメントの場合は空の配列を返す
+    if (!reviewComment || reviewComment.trim().length === 0) {
+        return [];
+    }
+    // 区切り文字で分割
+    const sections = reviewComment
+        .split("---")
+        .filter((section) => section.trim().length > 0);
+    const result = [];
+    for (const section of sections) {
+        // 行番号とコメント部分を抽出
+        const match = section.trim().match(/^(\d+)-(\d+):?\s*([\s\S]+)$/);
+        if (match) {
+            const startLine = Number.parseInt(match[1], 10);
+            const endLine = Number.parseInt(match[2], 10);
+            const comment = match[3].trim();
+            // コメントにLGTMが含まれているかチェック
+            const isLGTM = comment.toLowerCase().includes("lgtm!");
+            result.push({
+                startLine,
+                endLine,
+                comment,
+                isLGTM,
+            });
+        }
+    }
+    return result;
+};
 
 class ChangeFile {
     filename;

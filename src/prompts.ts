@@ -106,8 +106,10 @@ LGTM!
 ## Changes made to \`$filename\` for your review
 
 $patches
+`;
 
-We will communicate in $language.
+const defaultFooter = `
+IMPORTANT: We will communicate in $language.
 `;
 
 /**
@@ -118,21 +120,51 @@ export class Prompts {
   /**
    * Creates a new Prompts instance with the specified options.
    * @param options - Configuration options for prompts
+   * @param footer - Footer text to append to prompts (defaults to defaultFooter)
    */
-  constructor(private options: Options) {
+  constructor(
+    private options: Options,
+    private footer: string = defaultFooter,
+  ) {
     this.options = options;
   }
 
   /**
    * Renders a review prompt for a specific file change in a pull request.
-   * @param ctx - Pull request context containing metadata like title
+   * @param ctx - Pull request context containing metadata like title and description
    * @param change - File change information with diff content
    * @returns Formatted review prompt string with all placeholders replaced
    */
   renderReviewPrompt(ctx: PullRequestContext, change: ChangeFile): string {
-    let prompts = reviewFileDiff.replace("$title", ctx.title);
-    prompts = prompts.replace("$language", this.options.language);
-    return prompts.replace("$patches", change.renderHunk());
+    const data = {
+      title: ctx.title,
+      description: ctx.description || "",
+      filename: change.filename || "",
+      language: this.options.language || "",
+      patches: change.renderHunk(),
+    };
+
+    return this.renderTemplate(reviewFileDiff, data);
+  }
+
+  /**
+   * Renders a template string by replacing placeholders with provided values.
+   * @param template - Template string containing placeholders in the format $key or ${key}
+   * @param values - Object containing key-value pairs for placeholder replacement
+   * @returns Formatted string with all placeholders replaced and footer appended
+   */
+  renderTemplate(template: string, values: Record<string, string>): string {
+    // add footer
+    let result = `${template}\n\n---\n\n${this.footer}\n`;
+
+    for (const [key, value] of Object.entries(values)) {
+      const placeholder1 = `$${key}`;
+      const placeholder2 = `\${${key}}`;
+      result = result.split(placeholder1).join(value);
+      result = result.split(placeholder2).join(value);
+    }
+
+    return result;
   }
 
   /**

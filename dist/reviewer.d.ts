@@ -3,6 +3,12 @@ import type { PullRequestContext } from "./context.js";
 import type { Options } from "./option.js";
 import type { Prompts } from "./prompts.js";
 import type { ChangeFile } from "./types.js";
+export type ReviewComment = {
+    startLine: number;
+    endLine: number;
+    comment: string;
+    isLGTM: boolean;
+};
 /**
  * Reviewer class responsible for performing code reviews using a chatbot.
  * It initializes with configuration options and creates the appropriate chatbot instance.
@@ -34,3 +40,4 @@ export declare class Reviewer {
      */
     debug(): void;
 }
+export declare const parseReviewComment: (reviewComment: string) => ReviewComment[];
