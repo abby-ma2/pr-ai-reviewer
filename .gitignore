@@ -104,3 +104,6 @@ memory-bank
 .clinerules
 .aider*
 .vscode
+*.org
+*.swp
+*.swo
