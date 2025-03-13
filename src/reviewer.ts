@@ -13,7 +13,7 @@ export type ReviewComment = {
   isLGTM: boolean;
 };
 
-/**
+/**hp
  * Reviewer class responsible for performing code reviews using a chatbot.
  * It initializes with configuration options and creates the appropriate chatbot instance.
  */
@@ -68,17 +68,28 @@ export class Reviewer {
           continue;
         }
 
+        // Define base request and conditional parameters separately
+        const baseRequest = {
+          owner: prContext.owner,
+          repo: prContext.repo,
+          pull_number: prContext.pullRequestNumber,
+          commit_id: prContext.commentId,
+          path: change.filename,
+          body: review.comment,
+        };
+
+        // Set line parameters appropriately
+        const requestParams =
+          review.startLine === review.endLine
+            ? { ...baseRequest, line: review.endLine }
+            : {
+                ...baseRequest,
+                start_line: review.startLine,
+                line: review.endLine,
+              };
+
         const reviewCommentResult =
-          await this.octokit.rest.pulls.createReviewComment({
-            owner: prContext.owner,
-            repo: prContext.repo,
-            pull_number: prContext.pullRequestNumber,
-            commit_id: prContext.commentId,
-            path: change.filename,
-            body: review.comment,
-            start_line: review.startLine,
-            line: review.endLine,
-          });
+          await this.octokit.rest.pulls.createReviewComment(requestParams);
         if (reviewCommentResult.status === 201) {
           info(`Comment created: ${reviewCommentResult.data.html_url}`);
         }
@@ -96,20 +107,26 @@ export class Reviewer {
   }
 }
 
+/**
+ * Parses the review comment string and extracts structured review data.
+ *
+ * @param reviewComment - The raw review comment string to parse
+ * @returns Array of ReviewComment objects containing structured review data
+ */
 export const parseReviewComment = (reviewComment: string): ReviewComment[] => {
-  // 空のコメントの場合は空の配列を返す
+  // Return empty array for empty comments
   if (!reviewComment || reviewComment.trim().length === 0) {
     return [];
   }
 
-  // 区切り文字で分割
+  // Split by separator
   const sections = reviewComment
     .split("---")
     .filter((section) => section.trim().length > 0);
   const result: ReviewComment[] = [];
 
   for (const section of sections) {
-    // 行番号とコメント部分を抽出
+    // Extract line numbers and comment content
     const match = section.trim().match(/^(\d+)-(\d+):?\s*([\s\S]+)$/);
 
     if (match) {
@@ -117,7 +134,7 @@ export const parseReviewComment = (reviewComment: string): ReviewComment[] => {
       const endLine = Number.parseInt(match[2], 10);
       const comment = match[3].trim();
 
-      // コメントにLGTMが含まれているかチェック
+      // Check if comment contains LGTM
       const isLGTM = comment.toLowerCase().includes("lgtm!");
 
       result.push({

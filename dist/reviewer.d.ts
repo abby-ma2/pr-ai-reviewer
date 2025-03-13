@@ -9,7 +9,7 @@ export type ReviewComment = {
     comment: string;
     isLGTM: boolean;
 };
-/**
+/**hp
  * Reviewer class responsible for performing code reviews using a chatbot.
  * It initializes with configuration options and creates the appropriate chatbot instance.
  */
@@ -40,4 +40,10 @@ export declare class Reviewer {
      */
     debug(): void;
 }
+/**
+ * Parses the review comment string and extracts structured review data.
+ *
+ * @param reviewComment - The raw review comment string to parse
+ * @returns Array of ReviewComment objects containing structured review data
+ */
 export declare const parseReviewComment: (reviewComment: string) => ReviewComment[];
