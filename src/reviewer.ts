@@ -63,6 +63,26 @@ export class Reviewer {
 
       const reviews = parseReviewComment(reviewComment);
       info(`Review: ${JSON.stringify(reviews, null, 2)}`);
+      for (const review of reviews) {
+        if (review.isLGTM) {
+          continue;
+        }
+
+        const reviewCommentResult =
+          await this.octokit.rest.pulls.createReviewComment({
+            owner: prContext.owner,
+            repo: prContext.repo,
+            pull_number: prContext.pullRequestNumber,
+            commit_id: prContext.commentId,
+            path: change.filename,
+            body: review.comment,
+            start_line: review.startLine,
+            line: review.endLine,
+          });
+        if (reviewCommentResult.status === 201) {
+          info(`Comment created: ${reviewCommentResult.data.html_url}`);
+        }
+      }
     }
   }
 

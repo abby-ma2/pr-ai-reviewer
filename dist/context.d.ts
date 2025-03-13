@@ -8,14 +8,14 @@ export declare class PullRequestContext {
     /** Pull request title */
     title: string;
     /** Pull request description (optional) */
-    description?: string;
+    description: string;
     /** Summary of the pull request (optional) */
     summary?: string;
     /** Repository name */
     repo: string;
-    /** Pull request number (optional) */
-    pullRequestNumber?: number;
-    commentId?: string;
+    /** Pull request number */
+    pullRequestNumber: number;
+    commentId: string;
     /**
      * Creates an instance of PullRequestContext
      *
@@ -25,5 +25,5 @@ export declare class PullRequestContext {
      * @param description Pull request description (optional)
      * @param pullRequestNumber Pull request number (optional)
      */
-    constructor(owner: string, title: string, repo: string, description?: string, pullRequestNumber?: number, commentId?: string);
+    constructor(owner: string, title: string, repo: string, description: string, pullRequestNumber: number, commentId: string);
 }

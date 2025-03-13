@@ -45,8 +45,8 @@ const getPrContext = (): PullRequestContext => {
     repo.owner,
     pull_request?.title,
     repo.repo,
-    pull_request?.body,
-    pull_request?.number,
+    pull_request?.body || "",
+    pull_request?.number || 0,
     pull_request?.head?.sha,
   );
 };

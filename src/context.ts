@@ -8,15 +8,15 @@ export class PullRequestContext {
   /** Pull request title */
   public title: string;
   /** Pull request description (optional) */
-  public description?: string;
+  public description: string;
   /** Summary of the pull request (optional) */
   public summary?: string;
   /** Repository name */
   public repo: string;
-  /** Pull request number (optional) */
-  public pullRequestNumber?: number;
+  /** Pull request number */
+  public pullRequestNumber: number;
 
-  public commentId?: string;
+  public commentId: string;
 
   /**
    * Creates an instance of PullRequestContext
@@ -31,9 +31,9 @@ export class PullRequestContext {
     owner: string,
     title: string,
     repo: string,
-    description?: string,
-    pullRequestNumber?: number,
-    commentId?: string,
+    description: string,
+    pullRequestNumber: number,
+    commentId: string,
   ) {
     this.owner = owner;
     this.title = title;

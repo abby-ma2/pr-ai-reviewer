@@ -31820,7 +31820,7 @@ class PullRequestContext {
     summary;
     /** Repository name */
     repo;
-    /** Pull request number (optional) */
+    /** Pull request number */
     pullRequestNumber;
     commentId;
     /**
@@ -44938,6 +44938,24 @@ class Reviewer {
             const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
             const reviews = parseReviewComment(reviewComment);
             coreExports.info(`Review: ${JSON.stringify(reviews, null, 2)}`);
+            for (const review of reviews) {
+                if (review.isLGTM) {
+                    continue;
+                }
+                const reviewCommentResult = await this.octokit.rest.pulls.createReviewComment({
+                    owner: prContext.owner,
+                    repo: prContext.repo,
+                    pull_number: prContext.pullRequestNumber,
+                    commit_id: prContext.commentId,
+                    path: change.filename,
+                    body: review.comment,
+                    start_line: review.startLine,
+                    line: review.endLine,
+                });
+                if (reviewCommentResult.status === 201) {
+                    coreExports.info(`Comment created: ${reviewCommentResult.data.html_url}`);
+                }
+            }
         }
     }
     /**
@@ -45019,7 +45037,7 @@ const token = process.env.GITHUB_TOKEN || "";
 const getPrContext = () => {
     const repo = githubExports.context.repo;
     const pull_request = githubExports.context.payload.pull_request;
-    return new PullRequestContext(repo.owner, pull_request?.title, repo.repo, pull_request?.body, pull_request?.number, pull_request?.head?.sha);
+    return new PullRequestContext(repo.owner, pull_request?.title, repo.repo, pull_request?.body || "", pull_request?.number || 0, pull_request?.head?.sha);
 };
 /**
  * Gets the changed files
