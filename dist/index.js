@@ -34027,26 +34027,47 @@ class Options {
         this.language = language;
         this.summarizeReleaseNotes = summarizeReleaseNotes;
     }
-    // print all options using core.info
+    /**
+     * Prints all configuration options using core.info for debugging purposes.
+     * Displays each option value in the GitHub Actions log.
+     */
     print() {
         coreExports.info(`debug: ${this.debug}`);
         coreExports.info(`disable_review: ${this.disableReview}`);
         coreExports.info(`disable_release_notes: ${this.disableReleaseNotes}`);
-        coreExports.info(`path_filters: ${this.pathFilters}`);
+        coreExports.info(`path_filters: ${this.pathFilters.toString()}`);
         coreExports.info(`system_prompt: ${this.systemPrompt}`);
+        coreExports.info(`summary_model: ${this.summaryModel}`);
         coreExports.info(`model: ${this.model}`);
         coreExports.info(`openai_retries: ${this.retries}`);
         coreExports.info(`openai_timeout_ms: ${this.timeoutMS}`);
         coreExports.info(`language: ${this.language}`);
+        coreExports.info(`summarize_release_notes: ${this.summarizeReleaseNotes}`);
     }
+    /**
+     * Checks if a file path should be included based on configured path filters.
+     * Logs the result of the check for debugging purposes.
+     *
+     * @param path - The file path to check against filters
+     * @returns Boolean indicating whether the path should be included
+     */
     checkPath(path) {
         const ok = this.pathFilters.check(path);
-        coreExports.info(`checking path: ${path} => ${ok}`);
+        coreExports.debug(`checking path: ${path} => ${ok}`);
         return ok;
     }
 }
 class PathFilter {
     rules;
+    toString() {
+        return JSON.stringify(this.rules);
+    }
+    /**
+     * Creates a new PathFilter instance with inclusion and exclusion rules.
+     * Rules starting with "!" are treated as exclusion rules.
+     *
+     * @param rules - Array of glob patterns for path filtering, null for no filtering
+     */
     constructor(rules = null) {
         this.rules = [];
         if (rules != null) {
@@ -34063,6 +34084,15 @@ class PathFilter {
             }
         }
     }
+    /**
+     * Checks if a path matches the filter rules.
+     * A path is considered valid if:
+     * 1. No inclusion rules exist OR the path matches at least one inclusion rule
+     * 2. AND the path doesn't match any exclusion rules
+     *
+     * @param path - The file path to check against the rules
+     * @returns Boolean indicating whether the path passes the filter
+     */
     check(path) {
         if (this.rules.length === 0) {
             return true;
@@ -45080,6 +45110,10 @@ class Reviewer {
      * @private
      */
     octokit;
+    /**
+     * ChatBot instance used for generating summaries of changes.
+     * @private
+     */
     summaryBot;
     /**
      * The chatbot instance used for generating review comments.
@@ -45158,15 +45192,16 @@ class Reviewer {
     }
     /**
      * Outputs debug information about the reviewer configuration and chatbot.
+     * Logs the options for debugging purposes.
      */
     debug() {
         coreExports.debug(`${this.options}`);
-        coreExports.debug(`${this.reviewBot}`);
-        coreExports.debug(`${this.octokit}`);
     }
 }
 /**
  * Parses the review comment string and extracts structured review data.
+ * The function splits the comment by "---" separators and extracts line numbers
+ * and comment content for each section. Comments containing "LGTM!" are flagged.
  *
  * @param reviewComment - The raw review comment string to parse
  * @returns Array of ReviewComment objects containing structured review data
@@ -45242,18 +45277,21 @@ class FileDiff {
 }
 
 /**
- * Retrieves all configuration options from action inputs.
+ * Retrieves all configuration options from GitHub Actions inputs.
+ * Reads boolean flags, text inputs, and multiline inputs to configure the reviewer.
  *
- * @returns Configured Options instance
+ * @returns Configured Options instance with all action parameters
  */
 const getOptions = () => {
     return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("summary_model"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"));
 };
 const token = process.env.GITHUB_TOKEN || "";
 /**
- * Gets the PR context information from GitHub action context
+ * Gets the PR context information from GitHub action context.
+ * Extracts repository owner, PR title, repository name, PR body, PR number,
+ * and commit SHA from the GitHub context.
  *
- * @returns Pull request context object
+ * @returns Pull request context object with all required PR metadata
  */
 const getPrContext = () => {
     const repo = githubExports.context.repo;
@@ -45261,12 +45299,15 @@ const getPrContext = () => {
     return new PullRequestContext(repo.owner, pull_request?.title, repo.repo, pull_request?.body || "", pull_request?.number || 0, pull_request?.head?.sha);
 };
 /**
- * Fetches and processes the changed files in a pull request
+ * Fetches and processes the changed files in a pull request.
+ * Retrieves the diff between base and head commits, parses the patch information,
+ * and constructs FileDiff objects for each changed section of code.
  *
- * @param octokit - GitHub API client
- * @returns Array of changed files with parsed diff information
+ * @param octokit - GitHub API client instance
+ * @returns Array of ChangeFile objects with parsed diff information
+ * @throws Error if the commit information cannot be found
  */
-const getChangedFiles = async (octokit) => {
+const getChangedFiles = async (options, octokit) => {
     const pull_request = githubExports.context.payload.pull_request;
     const repo = githubExports.context.repo;
     if (!pull_request?.base?.sha) {
@@ -45284,6 +45325,9 @@ const getChangedFiles = async (octokit) => {
     }
     for (const file of targetBranchDiff.data.files) {
         if (!file.patch) {
+            continue;
+        }
+        if (!options.checkPath(file.filename)) {
             continue;
         }
         const changeFile = new ChangeFile(file.filename, file.sha, file.status, file.additions, file.deletions, file.changes, file.contents_url, file.patch, []);
@@ -45308,10 +45352,10 @@ const getChangedFiles = async (octokit) => {
  * 4. Initializes the GitHub client
  * 5. Creates a reviewer instance
  * 6. Fetches changed files in the PR
- * 7. Generates a summary of changes
- * 8. Reviews code changes and posts comments
+ * 7. Generates a summary of changes if enabled
+ * 8. Reviews code changes and posts comments if review is not disabled
  *
- * @returns {Promise<void>} Resolves when the action is complete.
+ * @returns {Promise<void>} Resolves when the action is complete
  * @throws {Error} If any part of the process fails
  */
 async function run() {
@@ -45335,7 +45379,7 @@ async function run() {
         // Create reviewer instance with GitHub client and options
         const reviewer = new Reviewer(octokit, commenter, options);
         // Fetch files changed in the pull request with diff information
-        const changes = await getChangedFiles(octokit);
+        const changes = await getChangedFiles(options, octokit);
         if (!options.disableReleaseNotes) {
             // Generate and post a summary of the PR changes
             const summary = await reviewer.summarizeChanges({

@@ -7,10 +7,10 @@
  * 4. Initializes the GitHub client
  * 5. Creates a reviewer instance
  * 6. Fetches changed files in the PR
- * 7. Generates a summary of changes
- * 8. Reviews code changes and posts comments
+ * 7. Generates a summary of changes if enabled
+ * 8. Reviews code changes and posts comments if review is not disabled
  *
- * @returns {Promise<void>} Resolves when the action is complete.
+ * @returns {Promise<void>} Resolves when the action is complete
  * @throws {Error} If any part of the process fails
  */
 export declare function run(): Promise<void>;
