@@ -83,7 +83,7 @@ export class Reviewer {
       // Create a prompt specific to this file's changes
       const prompt = prompts.renderSummarizeFileDiff(prContext, change);
       // Generate summary for this specific file change using the chatbot
-      const summary = await this.chatbot.chat(prContext, prompt);
+      const summary = await this.chatbot.create(prContext, prompt);
 
       // set the summary in the change object
       change.summary = summary;
@@ -97,7 +97,7 @@ export class Reviewer {
     const message = prContext.getChangeSummary();
     // Generate a comprehensive release note based on all file summaries
     const prompt = prompts.renderSummarizeReleaseNote(message);
-    return await this.chatbot.chat(prContext, prompt);
+    return await this.chatbot.create(prContext, prompt);
   }
 
   /**
@@ -131,7 +131,7 @@ export class Reviewer {
         // Debug the review prompt
         // debug(`Prompt: ${reviewPrompt}\n`);
 
-        const reviewComment = await this.chatbot.reviewCode(
+        const reviewComment = await this.chatbot.create(
           prContext,
           reviewPrompt,
         );

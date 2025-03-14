@@ -1,4 +1,4 @@
-import { debug, info, warning } from "@actions/core";
+import { debug, warning } from "@actions/core";
 import {
   type GenerativeModel,
   GoogleGenerativeAI,
@@ -28,52 +28,7 @@ export class GeminiClient implements ChatBot {
     }
   }
 
-  /**
-   * Review code changes and provide feedback
-   * @param ctx - Pull request context
-   * @param prompt - Prompt for the review
-   * @returns Review comments
-   */
-  async reviewCode(ctx: PullRequestContext, prompt: string): Promise<string> {
-    if (this.options.disableReview) {
-      info("Code review is disabled in options");
-      return "";
-    }
-
-    try {
-      // Call the Gemini API
-      const result = await this.model.generateContent({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.1,
-          // maxOutputTokens: 2000,
-        },
-      });
-
-      const reviewComment = result.response.text();
-
-      return reviewComment;
-    } catch (error) {
-      warning(
-        `Failed to review code for: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      // Retry logic
-      if (this.options.retries > 0) {
-        this.options.retries--;
-        return this.reviewCode(ctx, prompt);
-      }
-
-      return "Failed to review this file due to an API error.";
-    }
-  }
-
-  async chat(ctx: PullRequestContext, prompt: string): Promise<string> {
+  async create(ctx: PullRequestContext, prompt: string): Promise<string> {
     try {
       // Call the Gemini API
       const result = await this.model.generateContent({
@@ -98,7 +53,7 @@ export class GeminiClient implements ChatBot {
       // Retry logic
       if (this.options.retries > 0) {
         this.options.retries--;
-        return this.chat(ctx, prompt);
+        return this.create(ctx, prompt);
       }
 
       return "Failed to review this file due to an API error.";

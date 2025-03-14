@@ -38013,47 +38013,14 @@ class ClaudeClient {
             coreExports.debug(`Using model: ${this.model}`);
         }
     }
-    /**
-     * Review code differences
-     * @param prompt The prompt used for review
-     * @param patch Patch analysis result
-     * @returns Review comment
-     */
-    async reviewCode(ctx, prompt) {
-        if (this.options.disableReview) {
-            coreExports.info("Code review is disabled in options");
-            return "";
-        }
+    async create(ctx, prompt) {
         try {
             // Call Claude API
             const result = await this.client.messages.create({
                 model: this.model,
                 system: this.options.systemMessage,
                 messages: [{ role: "user", content: prompt }],
-                max_tokens: 2000,
-                temperature: 0.1,
-            });
-            const reviewComment = result.content[0];
-            return reviewComment.type === "text" ? reviewComment.text : "";
-        }
-        catch (error) {
-            coreExports.warning(`Failed to review code for : ${error instanceof Error ? error.message : String(error)}`);
-            // Retry logic
-            if (this.options.retries > 0) {
-                this.options.retries--;
-                return this.reviewCode(ctx, prompt);
-            }
-            return "Failed to review this file due to an API error.";
-        }
-    }
-    async chat(ctx, prompt) {
-        try {
-            // Call Claude API
-            const result = await this.client.messages.create({
-                model: this.model,
-                system: this.options.systemMessage,
-                messages: [{ role: "user", content: prompt }],
-                max_tokens: 8096,
+                max_tokens: 8192,
                 temperature: 0.1,
             });
             const res = result.content[0];
@@ -38064,7 +38031,7 @@ class ClaudeClient {
             // Retry logic
             if (this.options.retries > 0) {
                 this.options.retries--;
-                return this.chat(ctx, prompt);
+                return this.create(ctx, prompt);
             }
             return "Failed to review this file due to an API error.";
         }
@@ -39542,45 +39509,7 @@ class GeminiClient {
             coreExports.debug(`Using model: ${this.model}`);
         }
     }
-    /**
-     * Review code changes and provide feedback
-     * @param ctx - Pull request context
-     * @param prompt - Prompt for the review
-     * @returns Review comments
-     */
-    async reviewCode(ctx, prompt) {
-        if (this.options.disableReview) {
-            coreExports.info("Code review is disabled in options");
-            return "";
-        }
-        try {
-            // Call the Gemini API
-            const result = await this.model.generateContent({
-                contents: [
-                    {
-                        role: "user",
-                        parts: [{ text: prompt }],
-                    },
-                ],
-                generationConfig: {
-                    temperature: 0.1,
-                    // maxOutputTokens: 2000,
-                },
-            });
-            const reviewComment = result.response.text();
-            return reviewComment;
-        }
-        catch (error) {
-            coreExports.warning(`Failed to review code for: ${error instanceof Error ? error.message : String(error)}`);
-            // Retry logic
-            if (this.options.retries > 0) {
-                this.options.retries--;
-                return this.reviewCode(ctx, prompt);
-            }
-            return "Failed to review this file due to an API error.";
-        }
-    }
-    async chat(ctx, prompt) {
+    async create(ctx, prompt) {
         try {
             // Call the Gemini API
             const result = await this.model.generateContent({
@@ -39602,7 +39531,7 @@ class GeminiClient {
             // Retry logic
             if (this.options.retries > 0) {
                 this.options.retries--;
-                return this.chat(ctx, prompt);
+                return this.create(ctx, prompt);
             }
             return "Failed to review this file due to an API error.";
         }
@@ -45075,41 +45004,7 @@ class OpenAIClient {
             coreExports.debug(`Using model: ${options.model}`);
         }
     }
-    /**
-     * Review code changes and provide feedback
-     * @param ctx - Pull request context
-     * @param prompt - Prompt for the review
-     * @returns Review comments
-     */
-    async reviewCode(ctx, prompt) {
-        if (this.options.disableReview) {
-            coreExports.info("Code review is disabled in options");
-            return "";
-        }
-        // Determine file type (from extension)
-        // const fileExtension = patch.original.filename.split(".").pop() || "";      const fileType = this.getFileType(fileExtension);
-        try {
-            // Call the OpenAI API
-            const response = await this.client.chat.completions.create({
-                model: getModelName(this.options.model),
-                messages: [{ role: "user", content: prompt }],
-                temperature: 0.1,
-                // max_tokens: 2000,
-            });
-            const reviewComment = response.choices[0]?.message?.content || "";
-            return reviewComment;
-        }
-        catch (error) {
-            coreExports.warning(`Failed to review code for : ${error instanceof Error ? error.message : String(error)}`);
-            // Retry logic
-            if (this.options.retries > 0) {
-                this.options.retries--;
-                return this.reviewCode(ctx, prompt);
-            }
-            return "Failed to review this file due to an API error.";
-        }
-    }
-    async chat(ctx, prompt) {
+    async create(ctx, prompt) {
         try {
             // Call the OpenAI API
             const response = await this.client.chat.completions.create({
@@ -45125,7 +45020,7 @@ class OpenAIClient {
             // Retry logic
             if (this.options.retries > 0) {
                 this.options.retries--;
-                return this.chat(ctx, prompt);
+                return this.create(ctx, prompt);
             }
             return "Failed to review this file due to an API error.";
         }
@@ -45214,7 +45109,7 @@ class Reviewer {
             // Create a prompt specific to this file's changes
             const prompt = prompts.renderSummarizeFileDiff(prContext, change);
             // Generate summary for this specific file change using the chatbot
-            const summary = await this.chatbot.chat(prContext, prompt);
+            const summary = await this.chatbot.create(prContext, prompt);
             // set the summary in the change object
             change.summary = summary;
             // Log the summary for debugging purposes
@@ -45226,7 +45121,7 @@ class Reviewer {
         const message = prContext.getChangeSummary();
         // Generate a comprehensive release note based on all file summaries
         const prompt = prompts.renderSummarizeReleaseNote(message);
-        return await this.chatbot.chat(prContext, prompt);
+        return await this.chatbot.create(prContext, prompt);
     }
     /**
      * Reviews code changes in a pull request and posts review comments.
@@ -45245,7 +45140,7 @@ class Reviewer {
                 const reviewPrompt = prompts.renderReviewPrompt(prContext, change.summary, diff);
                 // Debug the review prompt
                 // debug(`Prompt: ${reviewPrompt}\n`);
-                const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
+                const reviewComment = await this.chatbot.create(prContext, reviewPrompt);
                 const reviews = parseReviewComment(reviewComment);
                 for (const review of reviews) {
                     if (review.isLGTM) {

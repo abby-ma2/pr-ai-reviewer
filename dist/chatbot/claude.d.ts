@@ -6,12 +6,5 @@ export declare class ClaudeClient implements ChatBot {
     private model;
     private options;
     constructor(options: Options);
-    /**
-     * Review code differences
-     * @param prompt The prompt used for review
-     * @param patch Patch analysis result
-     * @returns Review comment
-     */
-    reviewCode(ctx: PullRequestContext, prompt: string): Promise<string>;
-    chat(ctx: PullRequestContext, prompt: string): Promise<string>;
+    create(ctx: PullRequestContext, prompt: string): Promise<string>;
 }

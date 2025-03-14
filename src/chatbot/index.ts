@@ -10,15 +10,7 @@ import { OpenAIClient } from "./openai.js";
  * Interface for chatbot clients that can review code
  */
 export interface ChatBot {
-  /**
-   * Review code changes and provide feedback
-   * @param ctx - Pull request context containing repository information
-   * @param prompt - The review prompt containing instructions and context
-   * @returns Promise resolving to review comments as string
-   */
-  reviewCode(ctx: PullRequestContext, prompt: string): Promise<string>;
-
-  chat(ctx: PullRequestContext, prompt: string): Promise<string>;
+  create(ctx: PullRequestContext, prompt: string): Promise<string>;
 }
 
 /**

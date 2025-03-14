@@ -6,12 +6,5 @@ export declare class GeminiClient implements ChatBot {
     private model;
     private options;
     constructor(options: Options);
-    /**
-     * Review code changes and provide feedback
-     * @param ctx - Pull request context
-     * @param prompt - Prompt for the review
-     * @returns Review comments
-     */
-    reviewCode(ctx: PullRequestContext, prompt: string): Promise<string>;
-    chat(ctx: PullRequestContext, prompt: string): Promise<string>;
+    create(ctx: PullRequestContext, prompt: string): Promise<string>;
 }
