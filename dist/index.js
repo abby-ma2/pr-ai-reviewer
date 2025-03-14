@@ -31814,6 +31814,13 @@ class Commenter {
         this.octokit = octokit;
         this.prContext = prContext;
     }
+    /**
+     * Updates the pull request description with a provided message.
+     * The message is wrapped between special tags to be identifiable.
+     *
+     * @param message - The content to add to the PR description
+     * @returns A Promise that resolves when the description is updated
+     */
     async updateDescription(message) {
         const { owner, repo, pullRequestNumber } = this.prContext;
         const pr = await this.octokit.rest.pulls.get({
@@ -31821,13 +31828,13 @@ class Commenter {
             repo: repo,
             pull_number: pullRequestNumber,
         });
-        let body = "";
-        if (pr.data.body) {
-            body = pr.data.body;
-        }
+        // Get the current description of the pull request
+        const body = pr.data.body || "";
         const description = this.getDescription(body);
         const cleaned = this.removeContentWithinTags(message, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG);
-        const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n${cleaned}\n${DESCRIPTION_END_TAG}`;
+        // Append the new content to the existing description
+        const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n## Pull request summaries\n${cleaned}\n${DESCRIPTION_END_TAG}`;
+        // Update the pull request description
         await this.octokit.rest.pulls.update({
             owner,
             repo,
@@ -31863,9 +31870,24 @@ class Commenter {
         const reviewCommentResult = await this.octokit.rest.pulls.createReviewComment(requestParams);
         if (reviewCommentResult.status === 201) ;
     }
+    /**
+     * Extracts the original description by removing any content that was
+     * previously added between the defined tags.
+     *
+     * @param description - The full description text of the pull request
+     * @returns The description text without any auto-generated content
+     */
     getDescription(description) {
         return this.removeContentWithinTags(description, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG);
     }
+    /**
+     * Removes any content found between the specified start and end tags.
+     *
+     * @param content - The string to process
+     * @param startTag - The opening tag marking the beginning of content to remove
+     * @param endTag - The closing tag marking the end of content to remove
+     * @returns The content string with the tagged section removed
+     */
     removeContentWithinTags(content, startTag, endTag) {
         const start = content.indexOf(startTag);
         const end = content.lastIndexOf(endTag);
@@ -34437,7 +34459,6 @@ class Prompts {
             title: ctx.title,
             description: ctx.description || "",
             filename: change.filename || "",
-            language: this.options.language || "",
             patch: change.patch,
         };
         return this.renderTemplate(summarizeFileDiff, data);
@@ -34454,7 +34475,6 @@ class Prompts {
             description: ctx.description || "",
             filename: diff.filename || "",
             changeSummary: ctx.getChangeSummary(),
-            language: this.options.language || "",
             patches: diff.renderHunk(),
         };
         return this.renderTemplate(reviewFileDiff, data);
@@ -34466,6 +34486,7 @@ class Prompts {
      * @returns Formatted string with all placeholders replaced and footer appended
      */
     renderTemplate(template, values) {
+        values.language = this.options.language || "English";
         // add footer
         let result = `${template}\n\n---\n\n${this.footer}\n`;
         for (const [key, value] of Object.entries(values)) {
