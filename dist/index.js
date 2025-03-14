@@ -34008,17 +34008,19 @@ class Options {
     disableReleaseNotes;
     pathFilters;
     systemPrompt;
+    summaryModel;
     model;
     retries;
     timeoutMS;
     language;
     summarizeReleaseNotes;
-    constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, model, retries, timeoutMS, language, summarizeReleaseNotes) {
+    constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, summaryModel, model, retries, timeoutMS, language, summarizeReleaseNotes) {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
         this.pathFilters = new PathFilter(pathFilters);
         this.systemPrompt = systemPrompt;
+        this.summaryModel = summaryModel;
         this.model = model;
         this.retries = Number.parseInt(retries);
         this.timeoutMS = Number.parseInt(timeoutMS);
@@ -45078,11 +45080,12 @@ class Reviewer {
      * @private
      */
     octokit;
+    summaryBot;
     /**
      * The chatbot instance used for generating review comments.
      * @private
      */
-    chatbot;
+    reviewBot;
     /**
      * Creates a new Reviewer instance.
      * @param octokit - GitHub API client instance
@@ -45093,7 +45096,8 @@ class Reviewer {
         this.octokit = octokit;
         this.commenter = commenter;
         this.options = options;
-        this.chatbot = createChatBotFromModel(this.options.model, this.options);
+        this.summaryBot = createChatBotFromModel(this.options.summaryModel, this.options);
+        this.reviewBot = createChatBotFromModel(this.options.model, this.options);
     }
     /**
      * Generates summaries for each file change in a pull request and creates an overall release note.
@@ -45110,7 +45114,7 @@ class Reviewer {
             // Create a prompt specific to this file's changes
             const prompt = prompts.renderSummarizeFileDiff(prContext, change);
             // Generate summary for this specific file change using the chatbot
-            const summary = await this.chatbot.create(prContext, prompt);
+            const summary = await this.summaryBot.create(prContext, prompt);
             // set the summary in the change object
             change.summary = summary;
             // Log the summary for debugging purposes
@@ -45122,7 +45126,7 @@ class Reviewer {
         const message = prContext.getChangeSummary();
         // Generate a comprehensive release note based on all file summaries
         const prompt = prompts.renderSummarizeReleaseNote(message);
-        return await this.chatbot.create(prContext, prompt);
+        return await this.summaryBot.create(prContext, prompt);
     }
     /**
      * Reviews code changes in a pull request and posts review comments.
@@ -45141,7 +45145,7 @@ class Reviewer {
                 const reviewPrompt = prompts.renderReviewPrompt(prContext, change.summary, diff);
                 // Debug the review prompt
                 // debug(`Prompt: ${reviewPrompt}\n`);
-                const reviewComment = await this.chatbot.create(prContext, reviewPrompt);
+                const reviewComment = await this.reviewBot.create(prContext, reviewPrompt);
                 const reviews = parseReviewComment(reviewComment);
                 for (const review of reviews) {
                     if (review.isLGTM) {
@@ -45157,7 +45161,7 @@ class Reviewer {
      */
     debug() {
         coreExports.debug(`${this.options}`);
-        coreExports.debug(`${this.chatbot}`);
+        coreExports.debug(`${this.reviewBot}`);
         coreExports.debug(`${this.octokit}`);
     }
 }
@@ -45243,7 +45247,7 @@ class FileDiff {
  * @returns Configured Options instance
  */
 const getOptions = () => {
-    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"));
+    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("summary_model"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"));
 };
 const token = process.env.GITHUB_TOKEN || "";
 /**

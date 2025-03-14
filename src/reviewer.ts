@@ -38,10 +38,16 @@ export class Reviewer {
   private octokit: InstanceType<typeof GitHub>;
 
   /**
+   * ChatBot instance used for generating summaries of changes.
+   * @private
+   */
+  private summaryBot: ChatBot;
+
+  /**
    * The chatbot instance used for generating review comments.
    * @private
    */
-  private chatbot: ChatBot;
+  private reviewBot: ChatBot;
 
   /**
    * Creates a new Reviewer instance.
@@ -57,7 +63,11 @@ export class Reviewer {
     this.octokit = octokit;
     this.commenter = commenter;
     this.options = options;
-    this.chatbot = createChatBotFromModel(this.options.model, this.options);
+    this.summaryBot = createChatBotFromModel(
+      this.options.summaryModel,
+      this.options,
+    );
+    this.reviewBot = createChatBotFromModel(this.options.model, this.options);
   }
 
   /**
@@ -83,7 +93,7 @@ export class Reviewer {
       // Create a prompt specific to this file's changes
       const prompt = prompts.renderSummarizeFileDiff(prContext, change);
       // Generate summary for this specific file change using the chatbot
-      const summary = await this.chatbot.create(prContext, prompt);
+      const summary = await this.summaryBot.create(prContext, prompt);
 
       // set the summary in the change object
       change.summary = summary;
@@ -97,7 +107,7 @@ export class Reviewer {
     const message = prContext.getChangeSummary();
     // Generate a comprehensive release note based on all file summaries
     const prompt = prompts.renderSummarizeReleaseNote(message);
-    return await this.chatbot.create(prContext, prompt);
+    return await this.summaryBot.create(prContext, prompt);
   }
 
   /**
@@ -131,7 +141,7 @@ export class Reviewer {
         // Debug the review prompt
         // debug(`Prompt: ${reviewPrompt}\n`);
 
-        const reviewComment = await this.chatbot.create(
+        const reviewComment = await this.reviewBot.create(
           prContext,
           reviewPrompt,
         );
@@ -150,16 +160,17 @@ export class Reviewer {
 
   /**
    * Outputs debug information about the reviewer configuration and chatbot.
+   * Logs the options for debugging purposes.
    */
   debug(): void {
     debug(`${this.options}`);
-    debug(`${this.chatbot}`);
-    debug(`${this.octokit}`);
   }
 }
 
 /**
  * Parses the review comment string and extracts structured review data.
+ * The function splits the comment by "---" separators and extracts line numbers
+ * and comment content for each section. Comments containing "LGTM!" are flagged.
  *
  * @param reviewComment - The raw review comment string to parse
  * @returns Array of ReviewComment objects containing structured review data

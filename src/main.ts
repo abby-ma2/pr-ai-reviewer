@@ -14,9 +14,10 @@ import { Reviewer } from "./reviewer.js";
 import { ChangeFile, FileDiff } from "./types.js";
 
 /**
- * Retrieves all configuration options from action inputs.
+ * Retrieves all configuration options from GitHub Actions inputs.
+ * Reads boolean flags, text inputs, and multiline inputs to configure the reviewer.
  *
- * @returns Configured Options instance
+ * @returns Configured Options instance with all action parameters
  */
 const getOptions = () => {
   return new Options(
@@ -25,6 +26,7 @@ const getOptions = () => {
     getBooleanInput("disable_release_notes"),
     getMultilineInput("path_filters"),
     getInput("system_prompt"),
+    getInput("summary_model"),
     getInput("model"),
     getInput("retries"),
     getInput("timeout_ms"),
@@ -36,9 +38,11 @@ const getOptions = () => {
 const token = process.env.GITHUB_TOKEN || "";
 
 /**
- * Gets the PR context information from GitHub action context
+ * Gets the PR context information from GitHub action context.
+ * Extracts repository owner, PR title, repository name, PR body, PR number,
+ * and commit SHA from the GitHub context.
  *
- * @returns Pull request context object
+ * @returns Pull request context object with all required PR metadata
  */
 const getPrContext = (): PullRequestContext => {
   const repo = context.repo;
@@ -55,10 +59,13 @@ const getPrContext = (): PullRequestContext => {
 };
 
 /**
- * Fetches and processes the changed files in a pull request
+ * Fetches and processes the changed files in a pull request.
+ * Retrieves the diff between base and head commits, parses the patch information,
+ * and constructs FileDiff objects for each changed section of code.
  *
- * @param octokit - GitHub API client
- * @returns Array of changed files with parsed diff information
+ * @param octokit - GitHub API client instance
+ * @returns Array of ChangeFile objects with parsed diff information
+ * @throws Error if the commit information cannot be found
  */
 const getChangedFiles = async (
   octokit: ReturnType<typeof getOctokit>,
@@ -124,10 +131,10 @@ const getChangedFiles = async (
  * 4. Initializes the GitHub client
  * 5. Creates a reviewer instance
  * 6. Fetches changed files in the PR
- * 7. Generates a summary of changes
- * 8. Reviews code changes and posts comments
+ * 7. Generates a summary of changes if enabled
+ * 8. Reviews code changes and posts comments if review is not disabled
  *
- * @returns {Promise<void>} Resolves when the action is complete.
+ * @returns {Promise<void>} Resolves when the action is complete
  * @throws {Error} If any part of the process fails
  */
 export async function run(): Promise<void> {

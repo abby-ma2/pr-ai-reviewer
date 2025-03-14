@@ -33,7 +33,7 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         with:
           debug: true
+          summary_model: "google/gemini-2.0-flash-lite"
           model: "google/gemini-2.0-flash-exp"
           language: "japanese"
-          review_comment_lgtm: false
  

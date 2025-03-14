@@ -131,11 +131,16 @@ inputs:
     required: false
     description: 'Disable release notes'
     default: 'false'
-  model:
+  summary_model:
     required: true
     description:
       'Model to use for simple tasks like summarizing diff on a file.'
     default: 'openai/gpt-3.5-turbo'
+  model:
+    required: true
+    description:
+      'Model to use for review tasks.'
+    default: 'openai/gpt-4o'
   retries:
     required: false
     description:

@@ -30,11 +30,12 @@ export declare class Reviewer {
      * @private
      */
     private octokit;
+    private summaryBot;
     /**
      * The chatbot instance used for generating review comments.
      * @private
      */
-    private chatbot;
+    private reviewBot;
     /**
      * Creates a new Reviewer instance.
      * @param octokit - GitHub API client instance

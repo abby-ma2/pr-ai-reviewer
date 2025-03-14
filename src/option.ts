@@ -7,6 +7,7 @@ export class Options {
   disableReleaseNotes: boolean;
   pathFilters: PathFilter;
   systemPrompt: string;
+  summaryModel: string;
   model: string;
   retries: number;
   timeoutMS: number;
@@ -19,6 +20,7 @@ export class Options {
     disableReleaseNotes: boolean,
     pathFilters: string[] | null,
     systemPrompt: string,
+    summaryModel: string,
     model: string,
     retries: string,
     timeoutMS: string,
@@ -30,6 +32,7 @@ export class Options {
     this.disableReleaseNotes = disableReleaseNotes;
     this.pathFilters = new PathFilter(pathFilters);
     this.systemPrompt = systemPrompt;
+    this.summaryModel = summaryModel;
     this.model = model;
     this.retries = Number.parseInt(retries);
     this.timeoutMS = Number.parseInt(timeoutMS);
@@ -37,7 +40,10 @@ export class Options {
     this.summarizeReleaseNotes = summarizeReleaseNotes;
   }
 
-  // print all options using core.info
+  /**
+   * Prints all configuration options using core.info for debugging purposes.
+   * Displays each option value in the GitHub Actions log.
+   */
   print(): void {
     core.info(`debug: ${this.debug}`);
     core.info(`disable_review: ${this.disableReview}`);
@@ -50,6 +56,13 @@ export class Options {
     core.info(`language: ${this.language}`);
   }
 
+  /**
+   * Checks if a file path should be included based on configured path filters.
+   * Logs the result of the check for debugging purposes.
+   *
+   * @param path - The file path to check against filters
+   * @returns Boolean indicating whether the path should be included
+   */
   checkPath(path: string): boolean {
     const ok = this.pathFilters.check(path);
     core.info(`checking path: ${path} => ${ok}`);
@@ -60,6 +73,12 @@ export class Options {
 export class PathFilter {
   private readonly rules: Array<[string /* rule */, boolean /* exclude */]>;
 
+  /**
+   * Creates a new PathFilter instance with inclusion and exclusion rules.
+   * Rules starting with "!" are treated as exclusion rules.
+   *
+   * @param rules - Array of glob patterns for path filtering, null for no filtering
+   */
   constructor(rules: string[] | null = null) {
     this.rules = [];
     if (rules != null) {
@@ -76,6 +95,15 @@ export class PathFilter {
     }
   }
 
+  /**
+   * Checks if a path matches the filter rules.
+   * A path is considered valid if:
+   * 1. No inclusion rules exist OR the path matches at least one inclusion rule
+   * 2. AND the path doesn't match any exclusion rules
+   *
+   * @param path - The file path to check against the rules
+   * @returns Boolean indicating whether the path passes the filter
+   */
   check(path: string): boolean {
     if (this.rules.length === 0) {
       return true;
