@@ -75,7 +75,7 @@ export class Reviewer {
     prContext: PullRequestContext;
     prompts: Prompts;
     changes: ChangeFile[];
-  }) {
+  }): Promise<string> {
     for (const change of changes) {
       const prompt = prompts.renderSummarizeFileDiff(prContext, change);
       const summary = await this.chatbot.chat(prContext, prompt);
@@ -84,6 +84,7 @@ export class Reviewer {
       prContext.appendChangeSummary(change.filename, summary);
     }
     // update description
+    return prContext.getChangeSummary();
   }
 
   /**

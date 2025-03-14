@@ -31805,12 +31805,35 @@ function requireGithub () {
 
 var githubExports = requireGithub();
 
+const DESCRIPTION_START_TAG = "<!-- This is an auto-generated comment: release notes -->";
+const DESCRIPTION_END_TAG = "<!-- end of auto-generated comment: release notes -->";
 class Commenter {
     octokit;
     prContext;
     constructor(octokit, prContext) {
         this.octokit = octokit;
         this.prContext = prContext;
+    }
+    async updateDescription(message) {
+        const { owner, repo, pullRequestNumber } = this.prContext;
+        const pr = await this.octokit.rest.pulls.get({
+            owner: owner,
+            repo: repo,
+            pull_number: pullRequestNumber,
+        });
+        let body = "";
+        if (pr.data.body) {
+            body = pr.data.body;
+        }
+        const description = this.getDescription(body);
+        const cleaned = this.removeContentWithinTags(message, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG);
+        const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n${cleaned}\n${DESCRIPTION_END_TAG}`;
+        await this.octokit.rest.pulls.update({
+            owner,
+            repo,
+            pull_number: pullRequestNumber,
+            body: newDescription,
+        });
     }
     /**
      * Creates a review comment on a specific file in a pull request.
@@ -31839,6 +31862,17 @@ class Commenter {
             };
         const reviewCommentResult = await this.octokit.rest.pulls.createReviewComment(requestParams);
         if (reviewCommentResult.status === 201) ;
+    }
+    getDescription(description) {
+        return this.removeContentWithinTags(description, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG);
+    }
+    removeContentWithinTags(content, startTag, endTag) {
+        const start = content.indexOf(startTag);
+        const end = content.lastIndexOf(endTag);
+        if (start >= 0 && end >= 0) {
+            return content.slice(0, start) + content.slice(end + endTag.length);
+        }
+        return content;
     }
 }
 
@@ -45129,6 +45163,7 @@ class Reviewer {
             prContext.appendChangeSummary(change.filename, summary);
         }
         // update description
+        return prContext.getChangeSummary();
     }
     /**
      * Reviews code changes in a pull request and posts review comments.
@@ -45326,11 +45361,12 @@ async function run() {
         // Fetch files changed in the pull request with diff information
         const changes = await getChangedFiles(octokit);
         // Generate and post a summary of the PR changes
-        await reviewer.summarizeChanges({
+        const summary = await reviewer.summarizeChanges({
             prContext,
             prompts,
             changes,
         });
+        await commenter.updateDescription(summary);
         // Review code changes and post feedback comments
         await reviewer.reviewChanges({
             prContext,

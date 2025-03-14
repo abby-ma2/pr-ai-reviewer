@@ -157,11 +157,12 @@ export async function run(): Promise<void> {
     const changes = await getChangedFiles(octokit);
 
     // Generate and post a summary of the PR changes
-    await reviewer.summarizeChanges({
+    const summary = await reviewer.summarizeChanges({
       prContext,
       prompts,
       changes,
     });
+    await commenter.updateDescription(summary);
 
     // Review code changes and post feedback comments
     await reviewer.reviewChanges({

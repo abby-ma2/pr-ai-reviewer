@@ -53,7 +53,7 @@ export declare class Reviewer {
         prContext: PullRequestContext;
         prompts: Prompts;
         changes: ChangeFile[];
-    }): Promise<void>;
+    }): Promise<string>;
     /**
      * Reviews code changes in a pull request and posts review comments.
      *
