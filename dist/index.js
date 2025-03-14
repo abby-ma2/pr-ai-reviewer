@@ -34445,6 +34445,7 @@ class Prompts {
     renderSummarizeReleaseNote(message) {
         const data = {
             changeSummary: message,
+            language: this.options.language || "",
         };
         return this.renderTemplate(summarizePrefix + summarizeReleaseNote, data);
     }
@@ -34486,7 +34487,11 @@ class Prompts {
      * @returns Formatted string with all placeholders replaced and footer appended
      */
     renderTemplate(template, values) {
+<<<<<<< HEAD
         values.language = this.options.language || "English";
+=======
+        values.language = this.options.language || "";
+>>>>>>> 53cc9f6 (feat: update coverage badge and enhance prompts to include language option)
         // add footer
         let result = `${template}\n\n---\n\n${this.footer}\n`;
         for (const [key, value] of Object.entries(values)) {

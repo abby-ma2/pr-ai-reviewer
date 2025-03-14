@@ -194,6 +194,7 @@ export class Prompts {
   renderSummarizeReleaseNote(message: string): string {
     const data = {
       changeSummary: message,
+      language: this.options.language || "",
     };
 
     return this.renderTemplate(summarizePrefix + summarizeReleaseNote, data);
