@@ -22,13 +22,15 @@ Focus on the purpose and user impact, categorizing changes into one of the follo
 "New Feature", "Bug Fix", "Documentation", "Refactor", "Style", "Test", "Chore", or "Revert".  
 
 The output format must strictly follow this pattern:  
-- [Category]: [Change description]  
+- [Category]: [Change description]
+
+Please write only in bullet points.
 
 Example:  
 - New Feature: Added search functionality to the UI  
 - Bug Fix: Fixed an error occurring during login  
 
-Limit the response to 50–100 words. Clearly highlight changes that affect end users, and exclude code-level details or technical explanations.  
+Limit the response to 50–100 words. Clearly highlight changes that affect end users, and exclude code-level details or technical explanations. 
 `;
 
 /**
