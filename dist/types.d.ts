@@ -1,5 +1,5 @@
 import type { Hunk } from "./patchParser.js";
-export declare class ChangeFile {
+export type ChangeFile = {
     filename: string;
     sha: string;
     status: string;
@@ -10,12 +10,10 @@ export declare class ChangeFile {
     patch: string;
     diff: FileDiff[];
     summary: string;
-    constructor(filename: string, sha: string, status: string, additions: number, deletions: number, changes: number, url: string, patch: string, diff: FileDiff[], summary?: string);
-}
-export declare class FileDiff {
+    content: string | undefined;
+};
+export type FileDiff = {
     filename: string;
     from: Hunk;
     to: Hunk;
-    constructor(filename: string, from: Hunk, to: Hunk);
-    renderHunk(): string;
-}
+};

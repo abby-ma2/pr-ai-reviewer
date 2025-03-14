@@ -50,3 +50,4 @@ export declare class Prompts {
      */
     debug(): void;
 }
+export declare const renderFileDiffHunk: (diff: FileDiff) => string;

@@ -1,20 +1,16 @@
-export class Hunk {
-  constructor(
-    public filename: string,
-    public startLine: number,
-    public lineCount: number,
-    public content: string[],
-    public branch?: string,
-    public commitId?: string,
-  ) {}
-}
+export type Hunk = {
+  filename: string;
+  startLine: number;
+  lineCount: number;
+  content: string[];
+  branch?: string;
+  commitId?: string;
+};
 
-export class PatchParseResult {
-  constructor(
-    public from: Hunk,
-    public to: Hunk,
-  ) {}
-}
+export type DiffResult = {
+  from: Hunk;
+  to: Hunk;
+};
 
 /**
  * parseChunkHeader
@@ -133,7 +129,7 @@ const processChunk = (
   lines: string[],
   startIndex: number,
   filename: string,
-): { result: PatchParseResult | null; nextIndex: number } => {
+): { result: DiffResult | null; nextIndex: number } => {
   const headerResult = parseChunkHeader(lines[startIndex]);
   if (!headerResult) {
     return { result: null, nextIndex: startIndex + 1 };
@@ -174,17 +170,23 @@ const processChunk = (
     lineNo++;
   }
 
-  const result = new PatchParseResult(
-    new Hunk(
+  const result: DiffResult = {
+    from: {
       filename,
-      fromStart,
-      fromCount,
-      fromContent,
-      origBranch,
-      undefined,
-    ),
-    new Hunk(filename, toStart, toCount, toContent, modBranch, modCommitId),
-  );
+      startLine: fromStart,
+      lineCount: fromCount,
+      content: fromContent,
+      branch: origBranch,
+    },
+    to: {
+      filename,
+      startLine: toStart,
+      lineCount: toCount,
+      content: toContent,
+      branch: modBranch,
+      commitId: modCommitId,
+    },
+  };
 
   return { result, nextIndex: i };
 };
@@ -196,7 +198,7 @@ export const parsePatch = ({
   filename: string;
   patch?: string;
 }) => {
-  const results: PatchParseResult[] = [];
+  const results: DiffResult[] = [];
   if (!patch) {
     return results;
   }

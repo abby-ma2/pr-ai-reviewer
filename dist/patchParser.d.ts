@@ -1,18 +1,16 @@
-export declare class Hunk {
+export type Hunk = {
     filename: string;
     startLine: number;
     lineCount: number;
     content: string[];
-    branch?: string | undefined;
-    commitId?: string | undefined;
-    constructor(filename: string, startLine: number, lineCount: number, content: string[], branch?: string | undefined, commitId?: string | undefined);
-}
-export declare class PatchParseResult {
+    branch?: string;
+    commitId?: string;
+};
+export type DiffResult = {
     from: Hunk;
     to: Hunk;
-    constructor(from: Hunk, to: Hunk);
-}
+};
 export declare const parsePatch: ({ filename, patch, }: {
     filename: string;
     patch?: string;
-}) => PatchParseResult[];
+}) => DiffResult[];
