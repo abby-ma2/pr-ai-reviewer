@@ -19,6 +19,7 @@ export class PullRequestContext {
   public commentId: string;
 
   public fileSummaries: string[];
+
   /**
    * Creates an instance of PullRequestContext
    *

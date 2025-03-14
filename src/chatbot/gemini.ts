@@ -19,6 +19,9 @@ export class GeminiClient implements ChatBot {
     this.options = options;
     this.client = new GoogleGenerativeAI(apiKey);
     this.model = this.client.getGenerativeModel({
+      systemInstruction: {
+        text: options.systemPrompt, // System prompt for the model
+      },
       model: getModelName(options.model) || defaultModel,
     });
 

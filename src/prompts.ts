@@ -8,7 +8,7 @@ const defaultFooter = `
 We will communicate in $language.
 `;
 
-const summarizePrefix = `Here is the summary of changes you have generated for files:
+const defalutSummarizePrefix = `Here is the summary of changes you have generated for files:
 
 \`\`\`
 $changeSummary
@@ -182,23 +182,33 @@ $patch
  */
 export class Prompts {
   /**
-   * Creates a new Prompts instance with the specified options.
-   * @param options - Configuration options for prompts
-   * @param footer - Footer text to append to prompts (defaults to defaultFooter)
+   * Creates a new Prompts instance with the specified options and template settings.
+   * @param options - Configuration options for the PR reviewer
+   * @param footer - Custom footer text to append to prompts (defaults to a predefined footer)
+   * @param summarizePrefix - Custom prefix for summary prompts (defaults to a predefined prefix)
    */
   constructor(
     private options: Options,
     private footer: string = defaultFooter,
+    private summarizePrefix: string = defalutSummarizePrefix,
   ) {
     this.options = options;
   }
 
+  /**
+   * Renders a prompt to generate a release note based on the provided change summary.
+   * @param message - The change summary to include in the release note prompt
+   * @returns Formatted release note prompt string with the change summary inserted
+   */
   renderSummarizeReleaseNote(message: string): string {
     const data = {
       changeSummary: message,
     };
 
-    return this.renderTemplate(summarizePrefix + summarizeReleaseNote, data);
+    return this.renderTemplate(
+      this.summarizePrefix + summarizeReleaseNote,
+      data,
+    );
   }
 
   /**

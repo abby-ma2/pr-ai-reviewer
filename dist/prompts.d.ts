@@ -8,12 +8,19 @@ import type { ChangeFile, FileDiff } from "./types.js";
 export declare class Prompts {
     private options;
     private footer;
+    private summarizePrefix;
     /**
-     * Creates a new Prompts instance with the specified options.
-     * @param options - Configuration options for prompts
-     * @param footer - Footer text to append to prompts (defaults to defaultFooter)
+     * Creates a new Prompts instance with the specified options and template settings.
+     * @param options - Configuration options for the PR reviewer
+     * @param footer - Custom footer text to append to prompts (defaults to a predefined footer)
+     * @param summarizePrefix - Custom prefix for summary prompts (defaults to a predefined prefix)
      */
-    constructor(options: Options, footer?: string);
+    constructor(options: Options, footer?: string, summarizePrefix?: string);
+    /**
+     * Renders a prompt to generate a release note based on the provided change summary.
+     * @param message - The change summary to include in the release note prompt
+     * @returns Formatted release note prompt string with the change summary inserted
+     */
     renderSummarizeReleaseNote(message: string): string;
     /**
      * Renders a summary prompt for a specific file change in a pull request.

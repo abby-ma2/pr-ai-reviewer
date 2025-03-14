@@ -30,7 +30,7 @@ export class ClaudeClient implements ChatBot {
       // Call Claude API
       const result = await this.client.messages.create({
         model: this.model,
-        system: this.options.systemMessage,
+        system: this.options.systemPrompt,
         messages: [{ role: "user", content: prompt }],
         max_tokens: 8192,
         temperature: 0.1,

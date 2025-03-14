@@ -9,7 +9,7 @@ export class Options {
   reviewSimpleChanges: boolean;
   reviewCommentLGTM: boolean;
   pathFilters: PathFilter;
-  systemMessage: string;
+  systemPrompt: string;
   model: string;
   retries: number;
   timeoutMS: number;
@@ -24,7 +24,7 @@ export class Options {
     reviewSimpleChanges = false,
     reviewCommentLGTM = false,
     pathFilters: string[] | null = null,
-    systemMessage = "",
+    systemPrompt = "",
     model = "openai/o3-mini",
     retries = "3",
     timeoutMS = "120000",
@@ -38,7 +38,7 @@ export class Options {
     this.reviewSimpleChanges = reviewSimpleChanges;
     this.reviewCommentLGTM = reviewCommentLGTM;
     this.pathFilters = new PathFilter(pathFilters);
-    this.systemMessage = systemMessage;
+    this.systemPrompt = systemPrompt;
     this.model = model;
     this.retries = Number.parseInt(retries);
     this.timeoutMS = Number.parseInt(timeoutMS);
@@ -55,7 +55,7 @@ export class Options {
     core.info(`review_simple_changes: ${this.reviewSimpleChanges}`);
     core.info(`review_comment_lgtm: ${this.reviewCommentLGTM}`);
     core.info(`path_filters: ${this.pathFilters}`);
-    core.info(`system_message: ${this.systemMessage}`);
+    core.info(`system_prompt: ${this.systemPrompt}`);
     core.info(`model: ${this.model}`);
     core.info(`openai_retries: ${this.retries}`);
     core.info(`openai_timeout_ms: ${this.timeoutMS}`);

@@ -27,7 +27,7 @@ const getOptions = () => {
     getBooleanInput("review_simple_changes"),
     getBooleanInput("review_comment_lgtm"),
     getMultilineInput("path_filters"),
-    getInput("system_message"),
+    getInput("system_prompt"),
     getInput("model"),
     getInput("retries"),
     getInput("timeout_ms"),
@@ -140,6 +140,13 @@ export async function run(): Promise<void> {
 
     // Initialize prompt templates with configured options
     const prompts = new Prompts(options);
+
+    // replace system prompt with the one from options
+    const systemPrompt = prompts.renderTemplate(options.systemPrompt, {
+      language: options.language,
+    });
+    // Update the system prompt in options
+    options.systemPrompt = systemPrompt;
 
     // Get pull request context information from GitHub context
     const prContext = getPrContext();

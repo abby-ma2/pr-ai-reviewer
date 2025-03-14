@@ -28,7 +28,10 @@ export class OpenAIClient implements ChatBot {
       // Call the OpenAI API
       const response = await this.client.chat.completions.create({
         model: getModelName(this.options.model),
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          { role: "system", content: this.options.systemPrompt },
+          { role: "user", content: prompt },
+        ],
         temperature: 0.1,
         // max_tokens: 2000,
       });

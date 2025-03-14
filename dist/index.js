@@ -34010,13 +34010,13 @@ class Options {
     reviewSimpleChanges;
     reviewCommentLGTM;
     pathFilters;
-    systemMessage;
+    systemPrompt;
     model;
     retries;
     timeoutMS;
     apiBaseUrl;
     language;
-    constructor(debug, disableReview, disableReleaseNotes, maxFiles = "0", reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemMessage = "", model = "openai/o3-mini", retries = "3", timeoutMS = "120000", apiBaseUrl = "https://api.openai.com/v1", language = "en-US") {
+    constructor(debug, disableReview, disableReleaseNotes, maxFiles = "0", reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemPrompt = "", model = "openai/o3-mini", retries = "3", timeoutMS = "120000", apiBaseUrl = "https://api.openai.com/v1", language = "en-US") {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
@@ -34024,7 +34024,7 @@ class Options {
         this.reviewSimpleChanges = reviewSimpleChanges;
         this.reviewCommentLGTM = reviewCommentLGTM;
         this.pathFilters = new PathFilter(pathFilters);
-        this.systemMessage = systemMessage;
+        this.systemPrompt = systemPrompt;
         this.model = model;
         this.retries = Number.parseInt(retries);
         this.timeoutMS = Number.parseInt(timeoutMS);
@@ -34040,7 +34040,7 @@ class Options {
         coreExports.info(`review_simple_changes: ${this.reviewSimpleChanges}`);
         coreExports.info(`review_comment_lgtm: ${this.reviewCommentLGTM}`);
         coreExports.info(`path_filters: ${this.pathFilters}`);
-        coreExports.info(`system_message: ${this.systemMessage}`);
+        coreExports.info(`system_prompt: ${this.systemPrompt}`);
         coreExports.info(`model: ${this.model}`);
         coreExports.info(`openai_retries: ${this.retries}`);
         coreExports.info(`openai_timeout_ms: ${this.timeoutMS}`);
@@ -34263,7 +34263,7 @@ const defaultFooter = `
 ## IMPORTANT:
 We will communicate in $language.
 `;
-const summarizePrefix = `Here is the summary of changes you have generated for files:
+const defalutSummarizePrefix = `Here is the summary of changes you have generated for files:
 
 \`\`\`
 $changeSummary
@@ -34434,21 +34434,29 @@ $patch
 class Prompts {
     options;
     footer;
+    summarizePrefix;
     /**
-     * Creates a new Prompts instance with the specified options.
-     * @param options - Configuration options for prompts
-     * @param footer - Footer text to append to prompts (defaults to defaultFooter)
+     * Creates a new Prompts instance with the specified options and template settings.
+     * @param options - Configuration options for the PR reviewer
+     * @param footer - Custom footer text to append to prompts (defaults to a predefined footer)
+     * @param summarizePrefix - Custom prefix for summary prompts (defaults to a predefined prefix)
      */
-    constructor(options, footer = defaultFooter) {
+    constructor(options, footer = defaultFooter, summarizePrefix = defalutSummarizePrefix) {
         this.options = options;
         this.footer = footer;
+        this.summarizePrefix = summarizePrefix;
         this.options = options;
     }
+    /**
+     * Renders a prompt to generate a release note based on the provided change summary.
+     * @param message - The change summary to include in the release note prompt
+     * @returns Formatted release note prompt string with the change summary inserted
+     */
     renderSummarizeReleaseNote(message) {
         const data = {
             changeSummary: message,
         };
-        return this.renderTemplate(summarizePrefix + summarizeReleaseNote, data);
+        return this.renderTemplate(this.summarizePrefix + summarizeReleaseNote, data);
     }
     /**
      * Renders a summary prompt for a specific file change in a pull request.
@@ -38018,7 +38026,7 @@ class ClaudeClient {
             // Call Claude API
             const result = await this.client.messages.create({
                 model: this.model,
-                system: this.options.systemMessage,
+                system: this.options.systemPrompt,
                 messages: [{ role: "user", content: prompt }],
                 max_tokens: 8192,
                 temperature: 0.1,
@@ -39502,6 +39510,9 @@ class GeminiClient {
         this.options = options;
         this.client = new GoogleGenerativeAI(apiKey$1);
         this.model = this.client.getGenerativeModel({
+            systemInstruction: {
+                text: options.systemPrompt, // System prompt for the model
+            },
             model: getModelName(options.model) || defaultModel,
         });
         if (this.options.debug) {
@@ -45009,7 +45020,10 @@ class OpenAIClient {
             // Call the OpenAI API
             const response = await this.client.chat.completions.create({
                 model: getModelName(this.options.model),
-                messages: [{ role: "user", content: prompt }],
+                messages: [
+                    { role: "system", content: this.options.systemPrompt },
+                    { role: "user", content: prompt },
+                ],
                 temperature: 0.1,
                 // max_tokens: 2000,
             });
@@ -45242,7 +45256,7 @@ class FileDiff {
  * @returns Configured Options instance
  */
 const getOptions = () => {
-    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getInput("max_files"), coreExports.getBooleanInput("review_simple_changes"), coreExports.getBooleanInput("review_comment_lgtm"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_message"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("base_url"), coreExports.getInput("language"));
+    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getInput("max_files"), coreExports.getBooleanInput("review_simple_changes"), coreExports.getBooleanInput("review_comment_lgtm"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("base_url"), coreExports.getInput("language"));
 };
 const token = process.env.GITHUB_TOKEN || "";
 /**
@@ -45315,6 +45329,12 @@ async function run() {
         const options = getOptions();
         // Initialize prompt templates with configured options
         const prompts = new Prompts(options);
+        // replace system prompt with the one from options
+        const systemPrompt = prompts.renderTemplate(options.systemPrompt, {
+            language: options.language,
+        });
+        // Update the system prompt in options
+        options.systemPrompt = systemPrompt;
         // Get pull request context information from GitHub context
         const prContext = getPrContext();
         // Create authenticated GitHub API client
