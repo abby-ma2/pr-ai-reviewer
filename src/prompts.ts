@@ -41,6 +41,7 @@ Consider:
 3. Performance optimizations
 4. Readability and maintainability
 5. Any security concerns
+
 Suggest improvements and explain your reasoning for each suggestion.
 - Do NOT provide general feedback, summaries, explanations of changes, or praises
   for making good additions.

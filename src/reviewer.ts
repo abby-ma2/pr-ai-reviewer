@@ -1,4 +1,4 @@
-import { debug, info } from "@actions/core";
+import { debug } from "@actions/core";
 import type { GitHub } from "@actions/github/lib/utils.js";
 import { type ChatBot, createChatBotFromModel } from "./chatbot/index.js";
 import type { PullRequestContext } from "./context.js";
@@ -54,15 +54,17 @@ export class Reviewer {
     changes: ChangeFile[];
   }) {
     for (const change of changes) {
-      const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
-      info(`Prompt: ${reviewPrompt}\n`);
+      const reviewPrompt = prompts.renderReviewPrompt(prContext, change);
+
+      // debug(`Prompt: ${reviewPrompt}\n`);
+
       const reviewComment = await this.chatbot.reviewCode(
         prContext,
         reviewPrompt,
       );
 
       const reviews = parseReviewComment(reviewComment);
-      info(`Review: ${JSON.stringify(reviews, null, 2)}`);
+
       for (const review of reviews) {
         if (review.isLGTM) {
           continue;
@@ -91,7 +93,7 @@ export class Reviewer {
         const reviewCommentResult =
           await this.octokit.rest.pulls.createReviewComment(requestParams);
         if (reviewCommentResult.status === 201) {
-          info(`Comment created: ${reviewCommentResult.data.html_url}`);
+          // debug(`Comment created: ${reviewCommentResult.data.html_url}`);
         }
       }
     }
