@@ -151,16 +151,6 @@ export async function run(): Promise<void> {
     info(`description:${prContext.description}`);
 
     const octokit = getOctokit(token);
-    const { data: comments } = await octokit.rest.issues.listComments({
-      owner: prContext.owner,
-      repo: prContext.repo,
-      issue_number: prContext.pullRequestNumber,
-    });
-    for (const comment of comments) {
-      info(
-        `Comment: ${comment.body} - ID: ${comment.id} - Author: ${comment.user?.login}`,
-      );
-    }
 
     // Initialize commenter for posting review comments
     const commenter = new Commenter(octokit, prContext);
