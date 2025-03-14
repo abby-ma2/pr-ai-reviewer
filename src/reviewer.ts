@@ -83,6 +83,7 @@ export class Reviewer {
       debug(`Summary: ${change.filename} \n ${summary}\n`);
       prContext.appendChangeSummary(change.filename, summary);
     }
+    // TODO summarize all changes
     // update description
     return prContext.getChangeSummary();
   }
