@@ -1,9 +1,15 @@
 import { parseReviewComment } from "../src/reviewer";
 
+/**
+ * Unit tests for parseReviewComment function
+ */
 describe("parseReviewComment", () => {
-  it("正しく単一のコメントをパースする", () => {
+  /**
+   * Tests if a single comment is parsed correctly
+   */
+  it("correctly parses a single comment", () => {
     const input = `10-15:
-コードのインデントが不適切です。修正してください。`;
+Code indentation is inappropriate. Please fix it.`;
 
     const result = parseReviewComment(input);
 
@@ -11,17 +17,20 @@ describe("parseReviewComment", () => {
     expect(result[0]).toEqual({
       startLine: 10,
       endLine: 15,
-      comment: "コードのインデントが不適切です。修正してください。",
+      comment: "Code indentation is inappropriate. Please fix it.",
       isLGTM: false,
     });
   });
 
-  it("複数のコメントを正しくパースする", () => {
+  /**
+   * Tests if multiple comments are parsed correctly
+   */
+  it("correctly parses multiple comments", () => {
     const input = `10-15:
-コードのインデントが不適切です。修正してください。
+Code indentation is inappropriate. Please fix it.
 ---
 20-25:
-変数名がわかりにくいです。より記述的な名前を検討してください。`;
+Variable name is unclear. Please consider a more descriptive name.`;
 
     const result = parseReviewComment(input);
 
@@ -29,23 +38,27 @@ describe("parseReviewComment", () => {
     expect(result[0]).toEqual({
       startLine: 10,
       endLine: 15,
-      comment: "コードのインデントが不適切です。修正してください。",
+      comment: "Code indentation is inappropriate. Please fix it.",
       isLGTM: false,
     });
     expect(result[1]).toEqual({
       startLine: 20,
       endLine: 25,
-      comment: "変数名がわかりにくいです。より記述的な名前を検討してください。",
+      comment:
+        "Variable name is unclear. Please consider a more descriptive name.",
       isLGTM: false,
     });
   });
 
-  it("LGTMフラグを正しく識別する", () => {
+  /**
+   * Tests if LGTM flag is correctly identified
+   */
+  it("correctly identifies LGTM flag", () => {
     const input = `10-15:
-LGTM! コードは綺麗で理解しやすいです。
+LGTM! Code is clean and easy to understand.
 ---
 20-25:
-この実装は改善の余地があります。`;
+This implementation has room for improvement.`;
 
     const result = parseReviewComment(input);
 
@@ -54,38 +67,47 @@ LGTM! コードは綺麗で理解しやすいです。
     expect(result[1].isLGTM).toBe(false);
   });
 
-  it("複数行にわたるコメントを正しくパースする", () => {
+  /**
+   * Tests if multi-line comments are parsed correctly
+   */
+  it("correctly parses multi-line comments", () => {
     const input = `10-15:
-これは複数行の
-コメントです。
-コードレビューの内容を
-詳細に記述しています。
+This is a multi-line
+comment.
+It describes code review content
+in detail.
 ---
 20-25:
-別のコメント`;
+Another comment`;
 
     const result = parseReviewComment(input);
 
     expect(result).toHaveLength(2);
     expect(result[0].comment).toBe(
-      "これは複数行の\nコメントです。\nコードレビューの内容を\n詳細に記述しています。",
+      "This is a multi-line\ncomment.\nIt describes code review content\nin detail.",
     );
-    expect(result[1].comment).toBe("別のコメント");
+    expect(result[1].comment).toBe("Another comment");
   });
 
-  it("空の入力に対して空の配列を返す", () => {
+  /**
+   * Tests if empty input returns an empty array
+   */
+  it("returns empty array for empty input", () => {
     expect(parseReviewComment("")).toEqual([]);
     expect(parseReviewComment("   ")).toEqual([]);
   });
 
-  it("不正なフォーマットのセクションをスキップする", () => {
+  /**
+   * Tests if sections with invalid format are skipped
+   */
+  it("skips sections with invalid format", () => {
     const input = `10-15:
-正しいコメント
+Valid comment
 ---
-不正なフォーマット
+Invalid format
 ---
 20-25:
-別のコメント`;
+Another comment`;
 
     const result = parseReviewComment(input);
 
@@ -94,9 +116,12 @@ LGTM! コードは綺麗で理解しやすいです。
     expect(result[1].startLine).toBe(20);
   });
 
-  it("差分コードを含むコメントを正しくパースする", () => {
+  /**
+   * Tests if comments containing diff code blocks are parsed correctly
+   */
+  it("correctly parses comments containing diff code blocks", () => {
     const input = `45-45:
-不適切な変数名です。より記述的な名前を使用してください。
+Inappropriate variable name. Please use more descriptive names.
 \`\`\`diff
 -        const x = calculateValue();
 +        const calculatedTotal = calculateValue();
