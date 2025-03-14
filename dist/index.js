@@ -34131,30 +34131,6 @@ class PathFilter {
     }
 }
 
-class Hunk {
-    filename;
-    startLine;
-    lineCount;
-    content;
-    branch;
-    commitId;
-    constructor(filename, startLine, lineCount, content, branch, commitId) {
-        this.filename = filename;
-        this.startLine = startLine;
-        this.lineCount = lineCount;
-        this.content = content;
-        this.branch = branch;
-        this.commitId = commitId;
-    }
-}
-class PatchParseResult {
-    from;
-    to;
-    constructor(from, to) {
-        this.from = from;
-        this.to = to;
-    }
-}
 /**
  * parseChunkHeader
  */
@@ -34260,7 +34236,23 @@ const processChunk = (lines, startIndex, filename) => {
         i++;
         lineNo++;
     }
-    const result = new PatchParseResult(new Hunk(filename, fromStart, fromCount, fromContent, origBranch, undefined), new Hunk(filename, toStart, toCount, toContent, modBranch, modCommitId));
+    const result = {
+        from: {
+            filename,
+            startLine: fromStart,
+            lineCount: fromCount,
+            content: fromContent,
+            branch: origBranch,
+        },
+        to: {
+            filename,
+            startLine: toStart,
+            lineCount: toCount,
+            content: toContent,
+            branch: modBranch,
+            commitId: modCommitId,
+        },
+    };
     return { result, nextIndex: i };
 };
 const parsePatch = ({ filename, patch, }) => {
@@ -34511,7 +34503,7 @@ class Prompts {
             description: ctx.description || "",
             filename: diff.filename || "",
             changeSummary: summary,
-            patches: diff.renderHunk(),
+            patches: renderFileDiffHunk(diff),
         };
         return this.renderTemplate(reviewFileDiff, data);
     }
@@ -34541,6 +34533,11 @@ class Prompts {
         coreExports.debug(`Options: ${JSON.stringify(this.options)}`);
     }
 }
+const renderFileDiffHunk = (diff) => {
+    const fromContent = diff.from.content.join("\n");
+    const toContent = diff.to.content.join("\n");
+    return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``;
+};
 
 const VERSION$1 = '0.37.0'; // x-release-please-version
 
@@ -45236,46 +45233,6 @@ const parseReviewComment = (reviewComment) => {
     return result;
 };
 
-class ChangeFile {
-    filename;
-    sha;
-    status;
-    additions;
-    deletions;
-    changes;
-    url;
-    patch;
-    diff;
-    summary;
-    constructor(filename, sha, status, additions, deletions, changes, url, patch, diff, summary = "") {
-        this.filename = filename;
-        this.sha = sha;
-        this.status = status;
-        this.additions = additions;
-        this.deletions = deletions;
-        this.changes = changes;
-        this.url = url;
-        this.patch = patch;
-        this.diff = diff;
-        this.summary = summary;
-    }
-}
-class FileDiff {
-    filename;
-    from;
-    to;
-    constructor(filename, from, to) {
-        this.filename = filename;
-        this.from = from;
-        this.to = to;
-    }
-    renderHunk() {
-        const fromContent = this.from.content.join("\n");
-        const toContent = this.to.content.join("\n");
-        return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``;
-    }
-}
-
 /**
  * Retrieves all configuration options from GitHub Actions inputs.
  * Reads boolean flags, text inputs, and multiline inputs to configure the reviewer.
@@ -45330,13 +45287,29 @@ const getChangedFiles = async (options, octokit) => {
         if (!options.checkPath(file.filename)) {
             continue;
         }
-        const changeFile = new ChangeFile(file.filename, file.sha, file.status, file.additions, file.deletions, file.changes, file.contents_url, file.patch, []);
+        const changeFile = {
+            filename: file.filename,
+            sha: file.sha,
+            status: file.status,
+            additions: file.additions,
+            deletions: file.deletions,
+            changes: file.changes,
+            url: file.blob_url,
+            patch: file.patch,
+            summary: "",
+            content: undefined,
+            diff: [],
+        };
         const results = parsePatch({
             filename: file.filename,
             patch: file.patch,
         });
         for (const result of results) {
-            const diff = new FileDiff(file.filename, result.from, result.to);
+            const diff = {
+                filename: file.filename,
+                from: result.from,
+                to: result.to,
+            };
             changeFile.diff.push(diff);
         }
         changes.push(changeFile);

@@ -11,7 +11,7 @@ import { Options } from "./option.js";
 import { parsePatch } from "./patchParser.js";
 import { Prompts } from "./prompts.js";
 import { Reviewer } from "./reviewer.js";
-import { ChangeFile, FileDiff } from "./types.js";
+import type { ChangeFile, FileDiff } from "./types.js";
 
 /**
  * Retrieves all configuration options from GitHub Actions inputs.
@@ -99,17 +99,20 @@ const getChangedFiles = async (
     if (!options.checkPath(file.filename)) {
       continue;
     }
-    const changeFile = new ChangeFile(
-      file.filename,
-      file.sha,
-      file.status,
-      file.additions,
-      file.deletions,
-      file.changes,
-      file.contents_url,
-      file.patch,
-      [],
-    );
+
+    const changeFile: ChangeFile = {
+      filename: file.filename,
+      sha: file.sha,
+      status: file.status,
+      additions: file.additions,
+      deletions: file.deletions,
+      changes: file.changes,
+      url: file.blob_url,
+      patch: file.patch,
+      summary: "",
+      content: undefined,
+      diff: [],
+    };
 
     const results = parsePatch({
       filename: file.filename,
@@ -117,7 +120,11 @@ const getChangedFiles = async (
     });
 
     for (const result of results) {
-      const diff = new FileDiff(file.filename, result.from, result.to);
+      const diff: FileDiff = {
+        filename: file.filename,
+        from: result.from,
+        to: result.to,
+      };
       changeFile.diff.push(diff);
     }
     changes.push(changeFile);

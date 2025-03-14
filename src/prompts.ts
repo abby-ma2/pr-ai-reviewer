@@ -246,7 +246,7 @@ export class Prompts {
       description: ctx.description || "",
       filename: diff.filename || "",
       changeSummary: summary,
-      patches: diff.renderHunk(),
+      patches: renderFileDiffHunk(diff),
     };
 
     return this.renderTemplate(reviewFileDiff, data);
@@ -281,3 +281,10 @@ export class Prompts {
     debug(`Options: ${JSON.stringify(this.options)}`);
   }
 }
+
+export const renderFileDiffHunk = (diff: FileDiff): string => {
+  const fromContent = diff.from.content.join("\n");
+  const toContent = diff.to.content.join("\n");
+
+  return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``;
+};
