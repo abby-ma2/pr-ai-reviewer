@@ -30,6 +30,10 @@ export declare class Reviewer {
      * @private
      */
     private octokit;
+    /**
+     * ChatBot instance used for generating summaries of changes.
+     * @private
+     */
     private summaryBot;
     /**
      * The chatbot instance used for generating review comments.
@@ -75,11 +79,14 @@ export declare class Reviewer {
     }): Promise<void>;
     /**
      * Outputs debug information about the reviewer configuration and chatbot.
+     * Logs the options for debugging purposes.
      */
     debug(): void;
 }
 /**
  * Parses the review comment string and extracts structured review data.
+ * The function splits the comment by "---" separators and extracts line numbers
+ * and comment content for each section. Comments containing "LGTM!" are flagged.
  *
  * @param reviewComment - The raw review comment string to parse
  * @returns Array of ReviewComment objects containing structured review data
