@@ -1,4 +1,4 @@
-import * as core from "@actions/core";
+import { debug, info } from "@actions/core";
 import { minimatch } from "minimatch";
 
 export class Options {
@@ -45,15 +45,17 @@ export class Options {
    * Displays each option value in the GitHub Actions log.
    */
   print(): void {
-    core.info(`debug: ${this.debug}`);
-    core.info(`disable_review: ${this.disableReview}`);
-    core.info(`disable_release_notes: ${this.disableReleaseNotes}`);
-    core.info(`path_filters: ${this.pathFilters}`);
-    core.info(`system_prompt: ${this.systemPrompt}`);
-    core.info(`model: ${this.model}`);
-    core.info(`openai_retries: ${this.retries}`);
-    core.info(`openai_timeout_ms: ${this.timeoutMS}`);
-    core.info(`language: ${this.language}`);
+    info(`debug: ${this.debug}`);
+    info(`disable_review: ${this.disableReview}`);
+    info(`disable_release_notes: ${this.disableReleaseNotes}`);
+    info(`path_filters: ${this.pathFilters.toString()}`);
+    info(`system_prompt: ${this.systemPrompt}`);
+    info(`summary_model: ${this.summaryModel}`);
+    info(`model: ${this.model}`);
+    info(`openai_retries: ${this.retries}`);
+    info(`openai_timeout_ms: ${this.timeoutMS}`);
+    info(`language: ${this.language}`);
+    info(`summarize_release_notes: ${this.summarizeReleaseNotes}`);
   }
 
   /**
@@ -65,13 +67,17 @@ export class Options {
    */
   checkPath(path: string): boolean {
     const ok = this.pathFilters.check(path);
-    core.debug(`checking path: ${path} => ${ok}`);
+    debug(`checking path: ${path} => ${ok}`);
     return ok;
   }
 }
 
 export class PathFilter {
   private readonly rules: Array<[string /* rule */, boolean /* exclude */]>;
+
+  toString(): string {
+    return JSON.stringify(this.rules);
+  }
 
   /**
    * Creates a new PathFilter instance with inclusion and exclusion rules.
