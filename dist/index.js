@@ -45424,14 +45424,6 @@ async function run() {
         // Create authenticated GitHub API client
         coreExports.info(`description:${prContext.description}`);
         const octokit = githubExports.getOctokit(token);
-        const { data: comments } = await octokit.rest.issues.listComments({
-            owner: prContext.owner,
-            repo: prContext.repo,
-            issue_number: prContext.pullRequestNumber,
-        });
-        for (const comment of comments) {
-            coreExports.info(`Comment: ${comment.body} - ID: ${comment.id} - Author: ${comment.user?.login}`);
-        }
         // Initialize commenter for posting review comments
         const commenter = new Commenter(octokit, prContext);
         // Create reviewer instance with GitHub client and options
