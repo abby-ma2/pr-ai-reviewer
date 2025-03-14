@@ -1,5 +1,4 @@
 import { debug } from "@actions/core";
-import type { GitHub } from "@actions/github/lib/utils.js";
 import { type ChatBot, createChatBotFromModel } from "./chatbot/index.js";
 import type { Commenter } from "./commenter.js";
 import type { PullRequestContext } from "./context.js";
@@ -32,12 +31,6 @@ export class Reviewer {
   private commenter: Commenter;
 
   /**
-   * GitHub API client instance.
-   * @private
-   */
-  private octokit: InstanceType<typeof GitHub>;
-
-  /**
    * ChatBot instance used for generating summaries of changes.
    * @private
    */
@@ -55,12 +48,7 @@ export class Reviewer {
    * @param commenter - Commenter instance for posting comments
    * @param options - Configuration options for the reviewer and chatbot
    */
-  constructor(
-    octokit: InstanceType<typeof GitHub>,
-    commenter: Commenter,
-    options: Options,
-  ) {
-    this.octokit = octokit;
+  constructor(commenter: Commenter, options: Options) {
     this.commenter = commenter;
     this.options = options;
     this.summaryBot = createChatBotFromModel(

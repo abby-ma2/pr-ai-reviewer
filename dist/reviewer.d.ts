@@ -1,4 +1,3 @@
-import type { GitHub } from "@actions/github/lib/utils.js";
 import type { Commenter } from "./commenter.js";
 import type { PullRequestContext } from "./context.js";
 import type { Options } from "./option.js";
@@ -26,11 +25,6 @@ export declare class Reviewer {
      */
     private commenter;
     /**
-     * GitHub API client instance.
-     * @private
-     */
-    private octokit;
-    /**
      * ChatBot instance used for generating summaries of changes.
      * @private
      */
@@ -46,7 +40,7 @@ export declare class Reviewer {
      * @param commenter - Commenter instance for posting comments
      * @param options - Configuration options for the reviewer and chatbot
      */
-    constructor(octokit: InstanceType<typeof GitHub>, commenter: Commenter, options: Options);
+    constructor(commenter: Commenter, options: Options);
     /**
      * Generates summaries for each file change in a pull request and creates an overall release note.
      * It processes all files sequentially, generating individual file summaries before creating a consolidated release note.

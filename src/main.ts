@@ -165,7 +165,7 @@ export async function run(): Promise<void> {
     const commenter = new Commenter(octokit, prContext);
 
     // Create reviewer instance with GitHub client and options
-    const reviewer = new Reviewer(octokit, commenter, options);
+    const reviewer = new Reviewer(commenter, options);
 
     // Fetch files changed in the pull request with diff information
     const changes = await getChangedFiles(options, octokit);

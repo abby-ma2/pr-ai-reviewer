@@ -45106,11 +45106,6 @@ class Reviewer {
      */
     commenter;
     /**
-     * GitHub API client instance.
-     * @private
-     */
-    octokit;
-    /**
      * ChatBot instance used for generating summaries of changes.
      * @private
      */
@@ -45126,8 +45121,7 @@ class Reviewer {
      * @param commenter - Commenter instance for posting comments
      * @param options - Configuration options for the reviewer and chatbot
      */
-    constructor(octokit, commenter, options) {
-        this.octokit = octokit;
+    constructor(commenter, options) {
         this.commenter = commenter;
         this.options = options;
         this.summaryBot = createChatBotFromModel(this.options.summaryModel, this.options);
@@ -45180,6 +45174,7 @@ class Reviewer {
                 // Debug the review prompt
                 // debug(`Prompt: ${reviewPrompt}\n`);
                 const reviewComment = await this.reviewBot.create(prContext, reviewPrompt);
+                coreExports.debug(`Review comment: ${diff.filename}\n${reviewComment}`);
                 const reviews = parseReviewComment(reviewComment);
                 for (const review of reviews) {
                     if (review.isLGTM) {
@@ -45377,7 +45372,7 @@ async function run() {
         // Initialize commenter for posting review comments
         const commenter = new Commenter(octokit, prContext);
         // Create reviewer instance with GitHub client and options
-        const reviewer = new Reviewer(octokit, commenter, options);
+        const reviewer = new Reviewer(commenter, options);
         // Fetch files changed in the pull request with diff information
         const changes = await getChangedFiles(options, octokit);
         if (!options.disableReleaseNotes) {
