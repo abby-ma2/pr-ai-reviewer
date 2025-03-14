@@ -1,4 +1,4 @@
-import { debug } from "@actions/core";
+import { debug, info } from "@actions/core";
 import type { GitHub } from "@actions/github/lib/utils.js";
 import { type ChatBot, createChatBotFromModel } from "./chatbot/index.js";
 import type { PullRequestContext } from "./context.js";
@@ -43,6 +43,7 @@ export class Reviewer {
 
     this.chatbot = createChatBotFromModel(this.options.model, this.options);
   }
+
   async summarizeChanges({
     prContext,
     prompts,
@@ -55,7 +56,8 @@ export class Reviewer {
     for (const change of changes) {
       const prompt = prompts.renderSummarizeFileDiff(prContext, change);
       const summary = await this.chatbot.chat(prContext, prompt);
-      debug(`Summary: ${change.filename} \n ${summary}\n`);
+
+      info(`Summary: ${change.filename} \n ${summary}\n`);
     }
   }
 

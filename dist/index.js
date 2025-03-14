@@ -34276,18 +34276,23 @@ const summarizeFileDiff = `
 $description
 \`\`\`
 
+
+## Instructions
+
+Analyze the provided patch-format file diff and accurately summarize the changes. Follow these strict rules:
+
+1.  The summary must be based solely on the changes detected in the file diff.
+2.  The summary must clearly include changes to exported functions, global data structures, variable signatures, and any other significant changes.
+3.  The summary format must be bullet points, limited to 5 lines, with concise explanations for each item.
+4.  Avoid unnecessary introductions or explanations. Output only the direct summary.
+
 ## Diff
 
 $filename
 
-$patches
+$patch
 
-## Instructions
-
-I would like you to succinctly summarize the diff.
-If applicable, your summary should include a note about alterations
-to the signatures of exported functions, global data structures and
-variables, and any changes`; // TODO add output format
+`;
 /**
  * Class responsible for generating and managing prompts used for PR reviews.
  * Handles the templating of review prompts with contextual information.
@@ -34306,6 +34311,22 @@ class Prompts {
         this.options = options;
     }
     /**
+     * Renders a summary prompt for a specific file change in a pull request.
+     * @param ctx - Pull request context containing metadata like title and description
+     * @param change - File change information with patch content
+     * @returns Formatted summary prompt string with all placeholders replaced
+     */
+    renderSummarizeFileDiff(ctx, change) {
+        const data = {
+            title: ctx.title,
+            description: ctx.description || "",
+            filename: change.filename || "",
+            language: this.options.language || "",
+            patch: change.patch,
+        };
+        return this.renderTemplate(summarizeFileDiff, data);
+    }
+    /**
      * Renders a review prompt for a specific file change in a pull request.
      * @param ctx - Pull request context containing metadata like title and description
      * @param diff - File change information with diff content
@@ -34320,16 +34341,6 @@ class Prompts {
             patches: diff.renderHunk(),
         };
         return this.renderTemplate(reviewFileDiff, data);
-    }
-    renderSummarizeFileDiff(ctx, change) {
-        const data = {
-            title: ctx.title,
-            description: ctx.description || "",
-            filename: change.filename || "",
-            language: this.options.language || "",
-            patches: change.patch,
-        };
-        return this.renderTemplate(summarizeFileDiff, data);
     }
     /**
      * Renders a template string by replacing placeholders with provided values.
@@ -45040,7 +45051,7 @@ class Reviewer {
         for (const change of changes) {
             const prompt = prompts.renderSummarizeFileDiff(prContext, change);
             const summary = await this.chatbot.chat(prContext, prompt);
-            coreExports.debug(`Summary: ${change.filename} \n ${summary}\n`);
+            coreExports.info(`Summary: ${change.filename} \n ${summary}\n`);
         }
     }
     async reviewChanges({ prContext, prompts, changes, }) {

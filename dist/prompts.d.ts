@@ -15,13 +15,19 @@ export declare class Prompts {
      */
     constructor(options: Options, footer?: string);
     /**
+     * Renders a summary prompt for a specific file change in a pull request.
+     * @param ctx - Pull request context containing metadata like title and description
+     * @param change - File change information with patch content
+     * @returns Formatted summary prompt string with all placeholders replaced
+     */
+    renderSummarizeFileDiff(ctx: PullRequestContext, change: ChangeFile): string;
+    /**
      * Renders a review prompt for a specific file change in a pull request.
      * @param ctx - Pull request context containing metadata like title and description
      * @param diff - File change information with diff content
      * @returns Formatted review prompt string with all placeholders replaced
      */
     renderReviewPrompt(ctx: PullRequestContext, diff: FileDiff): string;
-    renderSummarizeFileDiff(ctx: PullRequestContext, change: ChangeFile): string;
     /**
      * Renders a template string by replacing placeholders with provided values.
      * @param template - Template string containing placeholders in the format $key or ${key}
