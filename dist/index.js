@@ -34157,6 +34157,10 @@ const parsePatch = ({ filename, patch, }) => {
     return results;
 };
 
+const defaultFooter = `
+## IMPORTANT:
+We will communicate in $language.
+`;
 /**
  * Template for the pull request review prompt.
  * Contains placeholders for title, description, summary, filename, and patches.
@@ -34262,9 +34266,6 @@ LGTM!
 
 $patches
 `;
-const defaultFooter = `
-IMPORTANT: We will communicate in $language.
-`;
 const summarizeFileDiff = `
 ## GitHub PR Title
 
@@ -34278,13 +34279,20 @@ $description
 
 
 ## Instructions
+Analyze the provided patch format file diff and summarize it according to the following instructions:
 
-Analyze the provided patch-format file diff and accurately summarize the changes. Follow these strict rules:
+1. Summarize the contents of the diff in 3 bullet points or less.
+2. If there are changes to the signatures of exported functions, global data structures, or variables, describe them specifically.
+3. If the purpose of the diff changes can be clearly read from the patch content, include the purpose in one line in the summary. If the purpose is unclear, the purpose description is unnecessary.
+4. Output only the summary, and no additional explanations or comments are needed.
 
-1.  The summary must be based solely on the changes detected in the file diff.
-2.  The summary must clearly include changes to exported functions, global data structures, variable signatures, and any other significant changes.
-3.  The summary format must be bullet points, limited to 5 lines, with concise explanations for each item.
-4.  Avoid unnecessary introductions or explanations. Output only the direct summary.
+**Output format:**
+
+* [Summary 1]
+* [Summary 2]
+* [Summary 3]
+* [Summary 4]
+* [Summary 5]
 
 ## Diff
 
