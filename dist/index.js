@@ -34279,12 +34279,12 @@ $description
 
 ## Instructions
 
-Analyze the provided patch-format file diff and accurately summarize the changes. Follow these strict rules:
+Analyze the provided patch format file diff and summarize it according to the following instructions:
 
-1.  The summary must be based solely on the changes detected in the file diff.
-2.  The summary must clearly include changes to exported functions, global data structures, variable signatures, and any other significant changes.
-3.  The summary format must be bullet points, limited to 5 lines, with concise explanations for each item.
-4.  Avoid unnecessary introductions or explanations. Output only the direct summary.
+1. Summarize the contents of the diff in 5 bullet points or less.
+2. If there are changes to the signatures of exported functions, global data structures, or variables, describe them specifically.
+3. If the purpose of the diff changes can be clearly read from the patch content, include the purpose in one line in the summary. If the purpose is unclear, the purpose description is unnecessary.
+4. Output only the summary, and no additional explanations or comments are needed.
 
 ## Diff
 
