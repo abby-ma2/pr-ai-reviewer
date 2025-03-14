@@ -31833,7 +31833,7 @@ class Commenter {
         const description = this.getDescription(body);
         const cleaned = this.removeContentWithinTags(message, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG);
         // Append the new content to the existing description
-        const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n## Pull request summaries\n${cleaned}\n${DESCRIPTION_END_TAG}`;
+        const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n### Key Change:\n${cleaned}\n${DESCRIPTION_END_TAG}`;
         // Update the pull request description
         await this.octokit.rest.pulls.update({
             owner,
