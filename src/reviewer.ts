@@ -122,7 +122,11 @@ export class Reviewer {
   }) {
     for (const change of changes) {
       for (const diff of change.diff) {
-        const reviewPrompt = prompts.renderReviewPrompt(prContext, change.summary, diff);
+        const reviewPrompt = prompts.renderReviewPrompt(
+          prContext,
+          change.summary,
+          diff,
+        );
 
         // Debug the review prompt
         // debug(`Prompt: ${reviewPrompt}\n`);

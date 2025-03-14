@@ -28,7 +28,7 @@ export declare class Prompts {
      * @param diff - File change information with diff content
      * @returns Formatted review prompt string with all placeholders replaced
      */
-    renderReviewPrompt(ctx: PullRequestContext, diff: FileDiff): string;
+    renderReviewPrompt(ctx: PullRequestContext, summary: string, diff: FileDiff): string;
     /**
      * Renders a template string by replacing placeholders with provided values.
      * @param template - Template string containing placeholders in the format $key or ${key}

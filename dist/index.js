@@ -34276,13 +34276,15 @@ Focus on the purpose and user impact, categorizing changes into one of the follo
 "New Feature", "Bug Fix", "Documentation", "Refactor", "Style", "Test", "Chore", or "Revert".  
 
 The output format must strictly follow this pattern:  
-- [Category]: [Change description]  
+- [Category]: [Change description]
+
+Please write only in bullet points.
 
 Example:  
 - New Feature: Added search functionality to the UI  
 - Bug Fix: Fixed an error occurring during login  
 
-Limit the response to 50–100 words. Clearly highlight changes that affect end users, and exclude code-level details or technical explanations.  
+Limit the response to 50–100 words. Clearly highlight changes that affect end users, and exclude code-level details or technical explanations. 
 `;
 /**
  * Template for the pull request review prompt.
@@ -34469,12 +34471,12 @@ class Prompts {
      * @param diff - File change information with diff content
      * @returns Formatted review prompt string with all placeholders replaced
      */
-    renderReviewPrompt(ctx, diff) {
+    renderReviewPrompt(ctx, summary, diff) {
         const data = {
             title: ctx.title,
             description: ctx.description || "",
             filename: diff.filename || "",
-            changeSummary: ctx.getChangeSummary(),
+            changeSummary: summary,
             patches: diff.renderHunk(),
         };
         return this.renderTemplate(reviewFileDiff, data);
@@ -45240,7 +45242,7 @@ class Reviewer {
     async reviewChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {
             for (const diff of change.diff) {
-                const reviewPrompt = prompts.renderReviewPrompt(prContext, diff);
+                const reviewPrompt = prompts.renderReviewPrompt(prContext, change.summary, diff);
                 // Debug the review prompt
                 // debug(`Prompt: ${reviewPrompt}\n`);
                 const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
