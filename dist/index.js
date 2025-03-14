@@ -34241,12 +34241,34 @@ const defaultFooter = `
 ## IMPORTANT:
 We will communicate in $language.
 `;
+const summarizePrefix = `Here is the summary of changes you have generated for files:
+
+\`\`\`
+$changeSummary
+\`\`\`
+
+`;
+const summarizeReleaseNote = `
+Generate concise and structured release notes for a Pull Request.  
+Focus on the purpose and user impact, categorizing changes into one of the following:  
+"New Feature", "Bug Fix", "Documentation", "Refactor", "Style", "Test", "Chore", or "Revert".  
+
+The output format must strictly follow this pattern:  
+- [Category]: [Change description]  
+
+Example:  
+- New Feature: Added search functionality to the UI  
+- Bug Fix: Fixed an error occurring during login  
+
+Limit the response to 50–100 words. Clearly highlight changes that affect end users, and exclude code-level details or technical explanations.  
+`;
 /**
  * Template for the pull request review prompt.
  * Contains placeholders for title, description, summary, filename, and patches.
  * Provides instructions for the AI reviewer on how to format responses.
  */
-const reviewFileDiff = `## GitHub PR Title
+const reviewFileDiff = `
+## GitHub PR Title
 
 \`$title\`
 
@@ -34398,6 +34420,12 @@ class Prompts {
         this.footer = footer;
         this.options = options;
     }
+    renderSummarizeReleaseNote(message) {
+        const data = {
+            changeSummary: message,
+        };
+        return this.renderTemplate(summarizePrefix + summarizeReleaseNote, data);
+    }
     /**
      * Renders a summary prompt for a specific file change in a pull request.
      * @param ctx - Pull request context containing metadata like title and description
@@ -34453,7 +34481,7 @@ class Prompts {
      * Uses the debug function from @actions/core.
      */
     debug() {
-        coreExports.debug(`${this.options}`);
+        coreExports.debug(`Options: ${JSON.stringify(this.options)}`);
     }
 }
 
@@ -45149,33 +45177,50 @@ class Reviewer {
         this.chatbot = createChatBotFromModel(this.options.model, this.options);
     }
     /**
-     * Generates summaries for each file change in a pull request.
+     * Generates summaries for each file change in a pull request and creates an overall release note.
+     * It processes all files sequentially, generating individual file summaries before creating a consolidated release note.
      *
      * @param prContext - Context information about the pull request
      * @param prompts - Prompt templates for generating summaries
      * @param changes - List of files changed in the pull request
+     * @returns A promise that resolves to a string containing the generated release note summary
      */
     async summarizeChanges({ prContext, prompts, changes, }) {
+        // Process each file change and generate individual summaries
         for (const change of changes) {
+            // Create a prompt specific to this file's changes
             const prompt = prompts.renderSummarizeFileDiff(prContext, change);
+            // Generate summary for this specific file change using the chatbot
             const summary = await this.chatbot.chat(prContext, prompt);
+            // set the summary in the change object
+            change.summary = summary;
+            // Log the summary for debugging purposes
             coreExports.debug(`Summary: ${change.filename} \n ${summary}\n`);
+            // Store the summary in the PR context for later compilation
             prContext.appendChangeSummary(change.filename, summary);
         }
-        // update description
-        return prContext.getChangeSummary();
+        // Get the compiled summary of all file changes
+        const message = prContext.getChangeSummary();
+        // Generate a comprehensive release note based on all file summaries
+        const prompt = prompts.renderSummarizeReleaseNote(message);
+        return await this.chatbot.chat(prContext, prompt);
     }
     /**
      * Reviews code changes in a pull request and posts review comments.
+     * Analyzes each changed file and its diffs, generates review comments using the chatbot,
+     * and posts any non-LGTM comments as review comments via the commenter.
+     * The method processes files sequentially, and for each file, processes all diffs.
      *
      * @param prContext - Context information about the pull request
      * @param prompts - Prompt templates for generating reviews
      * @param changes - List of files changed in the pull request
+     * @returns A promise that resolves when all reviews are completed and comments are posted
      */
     async reviewChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {
             for (const diff of change.diff) {
                 const reviewPrompt = prompts.renderReviewPrompt(prContext, diff);
+                // Debug the review prompt
                 // debug(`Prompt: ${reviewPrompt}\n`);
                 const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
                 const reviews = parseReviewComment(reviewComment);
@@ -45243,7 +45288,8 @@ class ChangeFile {
     url;
     patch;
     diff;
-    constructor(filename, sha, status, additions, deletions, changes, url, patch, diff) {
+    summary;
+    constructor(filename, sha, status, additions, deletions, changes, url, patch, diff, summary = "") {
         this.filename = filename;
         this.sha = sha;
         this.status = status;
@@ -45253,6 +45299,7 @@ class ChangeFile {
         this.url = url;
         this.patch = patch;
         this.diff = diff;
+        this.summary = summary;
     }
 }
 class FileDiff {
@@ -45366,6 +45413,7 @@ async function run() {
             prompts,
             changes,
         });
+        // Update the PR description with the generated summary
         await commenter.updateDescription(summary);
         // Review code changes and post feedback comments
         await reviewer.reviewChanges({

@@ -8,12 +8,36 @@ const defaultFooter = `
 We will communicate in $language.
 `;
 
+const summarizePrefix = `Here is the summary of changes you have generated for files:
+
+\`\`\`
+$changeSummary
+\`\`\`
+
+`;
+
+const summarizeReleaseNote = `
+Generate concise and structured release notes for a Pull Request.  
+Focus on the purpose and user impact, categorizing changes into one of the following:  
+"New Feature", "Bug Fix", "Documentation", "Refactor", "Style", "Test", "Chore", or "Revert".  
+
+The output format must strictly follow this pattern:  
+- [Category]: [Change description]  
+
+Example:  
+- New Feature: Added search functionality to the UI  
+- Bug Fix: Fixed an error occurring during login  
+
+Limit the response to 50–100 words. Clearly highlight changes that affect end users, and exclude code-level details or technical explanations.  
+`;
+
 /**
  * Template for the pull request review prompt.
  * Contains placeholders for title, description, summary, filename, and patches.
  * Provides instructions for the AI reviewer on how to format responses.
  */
-const reviewFileDiff = `## GitHub PR Title
+const reviewFileDiff = `
+## GitHub PR Title
 
 \`$title\`
 
@@ -167,6 +191,14 @@ export class Prompts {
     this.options = options;
   }
 
+  renderSummarizeReleaseNote(message: string): string {
+    const data = {
+      changeSummary: message,
+    };
+
+    return this.renderTemplate(summarizePrefix + summarizeReleaseNote, data);
+  }
+
   /**
    * Renders a summary prompt for a specific file change in a pull request.
    * @param ctx - Pull request context containing metadata like title and description
@@ -229,6 +261,6 @@ export class Prompts {
    * Uses the debug function from @actions/core.
    */
   debug(): void {
-    debug(`${this.options}`);
+    debug(`Options: ${JSON.stringify(this.options)}`);
   }
 }

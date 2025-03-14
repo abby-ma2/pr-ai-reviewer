@@ -11,6 +11,7 @@ export class ChangeFile {
     public url: string,
     public patch: string,
     public diff: FileDiff[],
+    public summary = "",
   ) {}
 }
 

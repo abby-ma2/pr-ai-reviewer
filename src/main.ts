@@ -162,6 +162,8 @@ export async function run(): Promise<void> {
       prompts,
       changes,
     });
+
+    // Update the PR description with the generated summary
     await commenter.updateDescription(summary);
 
     // Review code changes and post feedback comments

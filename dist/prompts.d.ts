@@ -14,6 +14,7 @@ export declare class Prompts {
      * @param footer - Footer text to append to prompts (defaults to defaultFooter)
      */
     constructor(options: Options, footer?: string);
+    renderSummarizeReleaseNote(message: string): string;
     /**
      * Renders a summary prompt for a specific file change in a pull request.
      * @param ctx - Pull request context containing metadata like title and description
