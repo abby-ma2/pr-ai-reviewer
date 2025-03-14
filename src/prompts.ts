@@ -171,7 +171,7 @@ export class Prompts {
       language: this.options.language || "",
     };
 
-    return this.renderTemplate(summarizeFileDiff, data);
+    return this.renderTemplate(reviewFileDiff, data);
   }
 
   renderSummarizeFileDiff(ctx: PullRequestContext, change: ChangeFile): string {
@@ -183,7 +183,7 @@ export class Prompts {
       patches: change.renderHunk(),
     };
 
-    return this.renderTemplate(reviewFileDiff, data);
+    return this.renderTemplate(summarizeFileDiff, data);
   }
 
   /**

@@ -34321,7 +34321,7 @@ class Prompts {
             filename: change.filename || "",
             language: this.options.language || "",
         };
-        return this.renderTemplate(summarizeFileDiff, data);
+        return this.renderTemplate(reviewFileDiff, data);
     }
     renderSummarizeFileDiff(ctx, change) {
         const data = {
@@ -34331,7 +34331,7 @@ class Prompts {
             language: this.options.language || "",
             patches: change.renderHunk(),
         };
-        return this.renderTemplate(reviewFileDiff, data);
+        return this.renderTemplate(summarizeFileDiff, data);
     }
     /**
      * Renders a template string by replacing placeholders with provided values.
@@ -45042,7 +45042,7 @@ class Reviewer {
         for (const change of changes) {
             const prompt = prompts.renderSummarizeFileDiff(prContext, change);
             const summary = await this.chatbot.chat(prContext, prompt);
-            coreExports.debug(`Summary: ${change.filename} ${summary}\n`);
+            coreExports.debug(`Summary: ${change.filename} \n ${summary}\n`);
         }
     }
     async reviewChanges({ prContext, prompts, changes, }) {

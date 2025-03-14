@@ -55,7 +55,7 @@ export class Reviewer {
     for (const change of changes) {
       const prompt = prompts.renderSummarizeFileDiff(prContext, change);
       const summary = await this.chatbot.chat(prContext, prompt);
-      debug(`Summary: ${change.filename} ${summary}\n`);
+      debug(`Summary: ${change.filename} \n ${summary}\n`);
     }
   }
 
