@@ -210,7 +210,6 @@ export class Prompts {
       title: ctx.title,
       description: ctx.description || "",
       filename: change.filename || "",
-      language: this.options.language || "",
       patch: change.patch,
     };
 
@@ -229,7 +228,6 @@ export class Prompts {
       description: ctx.description || "",
       filename: diff.filename || "",
       changeSummary: ctx.getChangeSummary(),
-      language: this.options.language || "",
       patches: diff.renderHunk(),
     };
 
@@ -243,6 +241,7 @@ export class Prompts {
    * @returns Formatted string with all placeholders replaced and footer appended
    */
   renderTemplate(template: string, values: Record<string, string>): string {
+    values.language = this.options.language || "English";
     // add footer
     let result = `${template}\n\n---\n\n${this.footer}\n`;
 
