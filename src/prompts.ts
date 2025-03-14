@@ -26,7 +26,7 @@ $description
 ## Summary of changes
 
 \`\`\`
-$short_summary
+$changeSummary
 \`\`\`
 
 ## IMPORTANT Instructions
@@ -196,6 +196,7 @@ export class Prompts {
       title: ctx.title,
       description: ctx.description || "",
       filename: diff.filename || "",
+      changeSummary: ctx.getChangeSummary(),
       language: this.options.language || "",
       patches: diff.renderHunk(),
     };

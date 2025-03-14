@@ -10,7 +10,7 @@ export class PullRequestContext {
   /** Pull request description (optional) */
   public description: string;
   /** Summary of the pull request (optional) */
-  public summary?: string;
+  public summary: string;
   /** Repository name */
   public repo: string;
   /** Pull request number */
@@ -18,6 +18,7 @@ export class PullRequestContext {
 
   public commentId: string;
 
+  public fileSummaries: string[];
   /**
    * Creates an instance of PullRequestContext
    *
@@ -41,5 +42,15 @@ export class PullRequestContext {
     this.description = description;
     this.pullRequestNumber = pullRequestNumber;
     this.commentId = commentId;
+    this.summary = "";
+    this.fileSummaries = [];
+  }
+
+  appendChangeSummary(file: string, summary: string) {
+    this.fileSummaries.push(`### ${file}\n\n${summary}`);
+  }
+
+  getChangeSummary(): string {
+    return `${this.fileSummaries.join("\n")}`;
   }
 }

@@ -31823,6 +31823,7 @@ class PullRequestContext {
     /** Pull request number */
     pullRequestNumber;
     commentId;
+    fileSummaries;
     /**
      * Creates an instance of PullRequestContext
      *
@@ -31839,6 +31840,14 @@ class PullRequestContext {
         this.description = description;
         this.pullRequestNumber = pullRequestNumber;
         this.commentId = commentId;
+        this.summary = "";
+        this.fileSummaries = [];
+    }
+    appendChangeSummary(file, summary) {
+        this.fileSummaries.push(`### ${file}\n\n${summary}`);
+    }
+    getChangeSummary() {
+        return `${this.fileSummaries.join("\n")}`;
     }
 }
 
@@ -34179,7 +34188,7 @@ $description
 ## Summary of changes
 
 \`\`\`
-$short_summary
+$changeSummary
 \`\`\`
 
 ## IMPORTANT Instructions
@@ -34345,6 +34354,7 @@ class Prompts {
             title: ctx.title,
             description: ctx.description || "",
             filename: diff.filename || "",
+            changeSummary: ctx.getChangeSummary(),
             language: this.options.language || "",
             patches: diff.renderHunk(),
         };
@@ -45059,7 +45069,8 @@ class Reviewer {
         for (const change of changes) {
             const prompt = prompts.renderSummarizeFileDiff(prContext, change);
             const summary = await this.chatbot.chat(prContext, prompt);
-            coreExports.info(`Summary: ${change.filename} \n ${summary}\n`);
+            coreExports.debug(`Summary: ${change.filename} \n ${summary}\n`);
+            prContext.appendChangeSummary(change.filename, summary);
         }
     }
     async reviewChanges({ prContext, prompts, changes, }) {

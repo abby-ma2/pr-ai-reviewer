@@ -10,12 +10,13 @@ export declare class PullRequestContext {
     /** Pull request description (optional) */
     description: string;
     /** Summary of the pull request (optional) */
-    summary?: string;
+    summary: string;
     /** Repository name */
     repo: string;
     /** Pull request number */
     pullRequestNumber: number;
     commentId: string;
+    fileSummaries: string[];
     /**
      * Creates an instance of PullRequestContext
      *
@@ -26,4 +27,6 @@ export declare class PullRequestContext {
      * @param pullRequestNumber Pull request number (optional)
      */
     constructor(owner: string, title: string, repo: string, description: string, pullRequestNumber: number, commentId: string);
+    appendChangeSummary(file: string, summary: string): void;
+    getChangeSummary(): string;
 }
