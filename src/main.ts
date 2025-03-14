@@ -32,6 +32,7 @@ const getOptions = () => {
     getInput("timeout_ms"),
     getInput("language"),
     getInput("summarize_release_notes"),
+    getInput("release_notes_title"),
   );
 };
 
@@ -162,7 +163,7 @@ export async function run(): Promise<void> {
     const octokit = getOctokit(token);
 
     // Initialize commenter for posting review comments
-    const commenter = new Commenter(octokit, prContext);
+    const commenter = new Commenter(options, octokit, prContext);
 
     // Create reviewer instance with GitHub client and options
     const reviewer = new Reviewer(commenter, options);

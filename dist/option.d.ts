@@ -10,7 +10,8 @@ export declare class Options {
     timeoutMS: number;
     language: string;
     summarizeReleaseNotes: string;
-    constructor(debug: boolean, disableReview: boolean, disableReleaseNotes: boolean, pathFilters: string[] | null, systemPrompt: string, summaryModel: string, model: string, retries: string, timeoutMS: string, language: string, summarizeReleaseNotes: string);
+    releaseNotesTitle: string;
+    constructor(debug: boolean, disableReview: boolean, disableReleaseNotes: boolean, pathFilters: string[] | null, systemPrompt: string, summaryModel: string, model: string, retries: string, timeoutMS: string, language: string, summarizeReleaseNotes: string, releaseNotesTitle: string);
     /**
      * Prints all configuration options using core.info for debugging purposes.
      * Displays each option value in the GitHub Actions log.

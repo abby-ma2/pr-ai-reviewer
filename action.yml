@@ -150,9 +150,13 @@ inputs:
     required: false
     description: 'Timeout for OpenAI API call in millis'
     default: '360000'
+  release_notes_title:
+    required: false
+    description: 'Title for the release notes'
+    default: 'Key Changes'
   system_prompt:
     required: false
-    description: 'System message to be sent to OpenAI'
+    description: 'System message to be sent to LLM'
     default: |
       You are a highly meticulous and logically rigorous software development assistant.  
       Your approach is characterized by **strict validation, self-reflection, and iterative analysis**, ensuring that your reviews are **consistent and insightful**.  
