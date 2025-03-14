@@ -145,7 +145,7 @@ export class Reviewer {
           prContext,
           reviewPrompt,
         );
-
+        debug(`Review comment: ${diff.filename}\n${reviewComment}`);
         const reviews = parseReviewComment(reviewComment);
 
         for (const review of reviews) {
