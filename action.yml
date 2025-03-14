@@ -10,20 +10,6 @@ inputs:
     required: false
     description: 'Enable debug mode'
     default: 'false'
-  max_files:
-    required: false
-    description:
-      'Max files to summarize and review. Less than or equal to 0 means no
-      limit.'
-    default: '150'
-  review_simple_changes:
-    required: false
-    description: 'Review even when the changes are simple'
-    default: 'false'
-  review_comment_lgtm:
-    required: false
-    description: 'Leave comments even if the patch is LGTM'
-    default: 'false'
   path_filters:
     required: false
     description: |
@@ -190,20 +176,6 @@ inputs:
       - Focus on identifying and resolving significant issues while deliberately ignoring trivial ones.  
       - Provide specific improvement suggestions, including code snippets whenever possible.  
       - Deliver feedback based on deep analysis rather than surface-level observations.  
-
-  summarize:
-    required: false
-    description: 'The prompt for final summarization response'
-    default: |
-      Provide your final response in markdown with the following content:
-
-      - **Walkthrough**: A high-level summary of the overall change instead of
-        specific files within 80 words.
-      - **Changes**: A markdown table of files and their summaries. Group files
-        with similar changes together into a single row to save space.
-
-      Avoid additional commentary as this summary will be added as a comment on the
-      GitHub pull request. Use the titles "Walkthrough" and "Changes" and they must be H2.
 
   summarize_release_notes:
     required: false

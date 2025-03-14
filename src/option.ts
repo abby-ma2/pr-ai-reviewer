@@ -5,45 +5,36 @@ export class Options {
   debug: boolean;
   disableReview: boolean;
   disableReleaseNotes: boolean;
-  maxFiles: number;
-  reviewSimpleChanges: boolean;
-  reviewCommentLGTM: boolean;
   pathFilters: PathFilter;
   systemPrompt: string;
   model: string;
   retries: number;
   timeoutMS: number;
-  apiBaseUrl: string;
   language: string;
+  summarizeReleaseNotes: string;
 
   constructor(
     debug: boolean,
     disableReview: boolean,
     disableReleaseNotes: boolean,
-    maxFiles = "0",
-    reviewSimpleChanges = false,
-    reviewCommentLGTM = false,
-    pathFilters: string[] | null = null,
-    systemPrompt = "",
-    model = "openai/o3-mini",
-    retries = "3",
-    timeoutMS = "120000",
-    apiBaseUrl = "https://api.openai.com/v1",
-    language = "en-US",
+    pathFilters: string[] | null,
+    systemPrompt: string,
+    model: string,
+    retries: string,
+    timeoutMS: string,
+    language: string,
+    summarizeReleaseNotes: string,
   ) {
     this.debug = debug;
     this.disableReview = disableReview;
     this.disableReleaseNotes = disableReleaseNotes;
-    this.maxFiles = Number.parseInt(maxFiles);
-    this.reviewSimpleChanges = reviewSimpleChanges;
-    this.reviewCommentLGTM = reviewCommentLGTM;
     this.pathFilters = new PathFilter(pathFilters);
     this.systemPrompt = systemPrompt;
     this.model = model;
     this.retries = Number.parseInt(retries);
     this.timeoutMS = Number.parseInt(timeoutMS);
-    this.apiBaseUrl = apiBaseUrl;
     this.language = language;
+    this.summarizeReleaseNotes = summarizeReleaseNotes;
   }
 
   // print all options using core.info
@@ -51,15 +42,11 @@ export class Options {
     core.info(`debug: ${this.debug}`);
     core.info(`disable_review: ${this.disableReview}`);
     core.info(`disable_release_notes: ${this.disableReleaseNotes}`);
-    core.info(`max_files: ${this.maxFiles}`);
-    core.info(`review_simple_changes: ${this.reviewSimpleChanges}`);
-    core.info(`review_comment_lgtm: ${this.reviewCommentLGTM}`);
     core.info(`path_filters: ${this.pathFilters}`);
     core.info(`system_prompt: ${this.systemPrompt}`);
     core.info(`model: ${this.model}`);
     core.info(`openai_retries: ${this.retries}`);
     core.info(`openai_timeout_ms: ${this.timeoutMS}`);
-    core.info(`api_base_url: ${this.apiBaseUrl}`);
     core.info(`language: ${this.language}`);
   }
 

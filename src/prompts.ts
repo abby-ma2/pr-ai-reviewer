@@ -181,18 +181,20 @@ $patch
  * Handles the templating of review prompts with contextual information.
  */
 export class Prompts {
+  private options: Options;
+  private summarizePrefix: string = defalutSummarizePrefix;
+  private summarizeReleaseNote: string;
+  private footer: string = defaultFooter;
+
   /**
    * Creates a new Prompts instance with the specified options and template settings.
    * @param options - Configuration options for the PR reviewer
    * @param footer - Custom footer text to append to prompts (defaults to a predefined footer)
    * @param summarizePrefix - Custom prefix for summary prompts (defaults to a predefined prefix)
    */
-  constructor(
-    private options: Options,
-    private footer: string = defaultFooter,
-    private summarizePrefix: string = defalutSummarizePrefix,
-  ) {
+  constructor(options: Options) {
     this.options = options;
+    this.summarizeReleaseNote = summarizeReleaseNote;
   }
 
   /**
@@ -206,7 +208,7 @@ export class Prompts {
     };
 
     return this.renderTemplate(
-      this.summarizePrefix + summarizeReleaseNote,
+      this.summarizePrefix + this.summarizeReleaseNote,
       data,
     );
   }

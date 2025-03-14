@@ -14,11 +14,9 @@ export class OpenAIClient implements ChatBot {
     this.options = options;
     this.client = new OpenAI({
       apiKey: apiKey,
-      baseURL: options.apiBaseUrl,
     });
 
     if (this.options.debug) {
-      debug(`OpenAI client initialized with base URL: ${options.apiBaseUrl}`);
       debug(`Using model: ${options.model}`);
     }
   }

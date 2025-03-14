@@ -23,16 +23,13 @@ const getOptions = () => {
     getBooleanInput("debug"),
     getBooleanInput("disable_review"),
     getBooleanInput("disable_release_notes"),
-    getInput("max_files"),
-    getBooleanInput("review_simple_changes"),
-    getBooleanInput("review_comment_lgtm"),
     getMultilineInput("path_filters"),
     getInput("system_prompt"),
     getInput("model"),
     getInput("retries"),
     getInput("timeout_ms"),
-    getInput("base_url"),
     getInput("language"),
+    getInput("summarize_release_notes"),
   );
 };
 

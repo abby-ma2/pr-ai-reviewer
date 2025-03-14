@@ -34006,45 +34006,35 @@ class Options {
     debug;
     disableReview;
     disableReleaseNotes;
-    maxFiles;
-    reviewSimpleChanges;
-    reviewCommentLGTM;
     pathFilters;
     systemPrompt;
     model;
     retries;
     timeoutMS;
-    apiBaseUrl;
     language;
-    constructor(debug, disableReview, disableReleaseNotes, maxFiles = "0", reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemPrompt = "", model = "openai/o3-mini", retries = "3", timeoutMS = "120000", apiBaseUrl = "https://api.openai.com/v1", language = "en-US") {
+    summarizeReleaseNotes;
+    constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, model, retries, timeoutMS, language, summarizeReleaseNotes) {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
-        this.maxFiles = Number.parseInt(maxFiles);
-        this.reviewSimpleChanges = reviewSimpleChanges;
-        this.reviewCommentLGTM = reviewCommentLGTM;
         this.pathFilters = new PathFilter(pathFilters);
         this.systemPrompt = systemPrompt;
         this.model = model;
         this.retries = Number.parseInt(retries);
         this.timeoutMS = Number.parseInt(timeoutMS);
-        this.apiBaseUrl = apiBaseUrl;
         this.language = language;
+        this.summarizeReleaseNotes = summarizeReleaseNotes;
     }
     // print all options using core.info
     print() {
         coreExports.info(`debug: ${this.debug}`);
         coreExports.info(`disable_review: ${this.disableReview}`);
         coreExports.info(`disable_release_notes: ${this.disableReleaseNotes}`);
-        coreExports.info(`max_files: ${this.maxFiles}`);
-        coreExports.info(`review_simple_changes: ${this.reviewSimpleChanges}`);
-        coreExports.info(`review_comment_lgtm: ${this.reviewCommentLGTM}`);
         coreExports.info(`path_filters: ${this.pathFilters}`);
         coreExports.info(`system_prompt: ${this.systemPrompt}`);
         coreExports.info(`model: ${this.model}`);
         coreExports.info(`openai_retries: ${this.retries}`);
         coreExports.info(`openai_timeout_ms: ${this.timeoutMS}`);
-        coreExports.info(`api_base_url: ${this.apiBaseUrl}`);
         coreExports.info(`language: ${this.language}`);
     }
     checkPath(path) {
@@ -34433,19 +34423,18 @@ $patch
  */
 class Prompts {
     options;
-    footer;
-    summarizePrefix;
+    summarizePrefix = defalutSummarizePrefix;
+    summarizeReleaseNote;
+    footer = defaultFooter;
     /**
      * Creates a new Prompts instance with the specified options and template settings.
      * @param options - Configuration options for the PR reviewer
      * @param footer - Custom footer text to append to prompts (defaults to a predefined footer)
      * @param summarizePrefix - Custom prefix for summary prompts (defaults to a predefined prefix)
      */
-    constructor(options, footer = defaultFooter, summarizePrefix = defalutSummarizePrefix) {
+    constructor(options) {
         this.options = options;
-        this.footer = footer;
-        this.summarizePrefix = summarizePrefix;
-        this.options = options;
+        this.summarizeReleaseNote = summarizeReleaseNote;
     }
     /**
      * Renders a prompt to generate a release note based on the provided change summary.
@@ -34456,7 +34445,7 @@ class Prompts {
         const data = {
             changeSummary: message,
         };
-        return this.renderTemplate(this.summarizePrefix + summarizeReleaseNote, data);
+        return this.renderTemplate(this.summarizePrefix + this.summarizeReleaseNote, data);
     }
     /**
      * Renders a summary prompt for a specific file change in a pull request.
@@ -45008,10 +44997,8 @@ class OpenAIClient {
         this.options = options;
         this.client = new OpenAI({
             apiKey: apiKey,
-            baseURL: options.apiBaseUrl,
         });
         if (this.options.debug) {
-            coreExports.debug(`OpenAI client initialized with base URL: ${options.apiBaseUrl}`);
             coreExports.debug(`Using model: ${options.model}`);
         }
     }
@@ -45256,7 +45243,7 @@ class FileDiff {
  * @returns Configured Options instance
  */
 const getOptions = () => {
-    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getInput("max_files"), coreExports.getBooleanInput("review_simple_changes"), coreExports.getBooleanInput("review_comment_lgtm"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("base_url"), coreExports.getInput("language"));
+    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"));
 };
 const token = process.env.GITHUB_TOKEN || "";
 /**
