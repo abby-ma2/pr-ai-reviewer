@@ -2,6 +2,7 @@ import {
   getBooleanInput,
   getInput,
   getMultilineInput,
+  info,
   setFailed,
 } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
@@ -46,6 +47,8 @@ const token = process.env.GITHUB_TOKEN || "";
 const getPrContext = (): PullRequestContext => {
   const repo = context.repo;
   const pull_request = context.payload.pull_request;
+
+  info(`Pull request context: ${JSON.stringify(pull_request)}`);
 
   return new PullRequestContext(
     repo.owner,
@@ -146,6 +149,16 @@ export async function run(): Promise<void> {
 
     // Create authenticated GitHub API client
     const octokit = getOctokit(token);
+    const { data: comments } = await octokit.rest.issues.listComments({
+      owner: prContext.owner,
+      repo: prContext.repo,
+      issue_number: prContext.pullRequestNumber,
+    });
+    for (const comment of comments) {
+      info(
+        `Comment: ${comment.body} - ID: ${comment.id} - Author: ${comment.user?.login}`,
+      );
+    }
 
     // Initialize commenter for posting review comments
     const commenter = new Commenter(octokit, prContext);
