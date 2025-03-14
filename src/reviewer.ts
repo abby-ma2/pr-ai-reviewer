@@ -1,6 +1,7 @@
 import { debug } from "@actions/core";
 import type { GitHub } from "@actions/github/lib/utils.js";
 import { type ChatBot, createChatBotFromModel } from "./chatbot/index.js";
+import type { Commenter } from "./commenter.js";
 import type { PullRequestContext } from "./context.js";
 import type { Options } from "./option.js";
 import type { Prompts } from "./prompts.js";
@@ -13,7 +14,7 @@ export type ReviewComment = {
   isLGTM: boolean;
 };
 
-/**hp
+/**
  * Reviewer class responsible for performing code reviews using a chatbot.
  * It initializes with configuration options and creates the appropriate chatbot instance.
  */
@@ -24,6 +25,16 @@ export class Reviewer {
    */
   private options: Options;
 
+  /**
+   * Commenter instance used to post review comments to GitHub.
+   * @private
+   */
+  private commenter: Commenter;
+
+  /**
+   * GitHub API client instance.
+   * @private
+   */
   private octokit: InstanceType<typeof GitHub>;
 
   /**
@@ -34,16 +45,28 @@ export class Reviewer {
 
   /**
    * Creates a new Reviewer instance.
+   * @param octokit - GitHub API client instance
+   * @param commenter - Commenter instance for posting comments
    * @param options - Configuration options for the reviewer and chatbot
    */
-  constructor(octokit: InstanceType<typeof GitHub>, options: Options) {
+  constructor(
+    octokit: InstanceType<typeof GitHub>,
+    commenter: Commenter,
+    options: Options,
+  ) {
     this.octokit = octokit;
-
+    this.commenter = commenter;
     this.options = options;
-
     this.chatbot = createChatBotFromModel(this.options.model, this.options);
   }
 
+  /**
+   * Generates summaries for each file change in a pull request.
+   *
+   * @param prContext - Context information about the pull request
+   * @param prompts - Prompt templates for generating summaries
+   * @param changes - List of files changed in the pull request
+   */
   async summarizeChanges({
     prContext,
     prompts,
@@ -60,8 +83,16 @@ export class Reviewer {
       debug(`Summary: ${change.filename} \n ${summary}\n`);
       prContext.appendChangeSummary(change.filename, summary);
     }
+    // update description
   }
 
+  /**
+   * Reviews code changes in a pull request and posts review comments.
+   *
+   * @param prContext - Context information about the pull request
+   * @param prompts - Prompt templates for generating reviews
+   * @param changes - List of files changed in the pull request
+   */
   async reviewChanges({
     prContext,
     prompts,
@@ -88,32 +119,7 @@ export class Reviewer {
           if (review.isLGTM) {
             continue;
           }
-
-          // Define base request and conditional parameters separately
-          const baseRequest = {
-            owner: prContext.owner,
-            repo: prContext.repo,
-            pull_number: prContext.pullRequestNumber,
-            commit_id: prContext.commentId,
-            path: change.filename,
-            body: review.comment,
-          };
-
-          // Set line parameters appropriately
-          const requestParams =
-            review.startLine === review.endLine
-              ? { ...baseRequest, line: review.endLine }
-              : {
-                  ...baseRequest,
-                  start_line: review.startLine,
-                  line: review.endLine,
-                };
-
-          const reviewCommentResult =
-            await this.octokit.rest.pulls.createReviewComment(requestParams);
-          if (reviewCommentResult.status === 201) {
-            // debug(`Comment created: ${reviewCommentResult.data.html_url}`);
-          }
+          await this.commenter.createReviewComment(change.filename, review);
         }
       }
     }

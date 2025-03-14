@@ -5,6 +5,7 @@ import {
   setFailed,
 } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
+import { Commenter } from "./commenter.js";
 import { PullRequestContext } from "./context.js";
 import { Options } from "./option.js";
 import { parsePatch } from "./patchParser.js";
@@ -12,6 +13,11 @@ import { Prompts } from "./prompts.js";
 import { Reviewer } from "./reviewer.js";
 import { ChangeFile, FileDiff } from "./types.js";
 
+/**
+ * Retrieves all configuration options from action inputs.
+ *
+ * @returns Configured Options instance
+ */
 const getOptions = () => {
   return new Options(
     getBooleanInput("debug"),
@@ -33,9 +39,9 @@ const getOptions = () => {
 const token = process.env.GITHUB_TOKEN || "";
 
 /**
- * Gets the PR context
+ * Gets the PR context information from GitHub action context
  *
- * @returns PR context
+ * @returns Pull request context object
  */
 const getPrContext = (): PullRequestContext => {
   const repo = context.repo;
@@ -52,10 +58,10 @@ const getPrContext = (): PullRequestContext => {
 };
 
 /**
- * Gets the changed files
+ * Fetches and processes the changed files in a pull request
  *
- * @param octokit GitHub client
- * @returns Array of changed files
+ * @param octokit - GitHub API client
+ * @returns Array of changed files with parsed diff information
  */
 const getChangedFiles = async (
   octokit: ReturnType<typeof getOctokit>,
@@ -129,24 +135,35 @@ const getChangedFiles = async (
  */
 export async function run(): Promise<void> {
   try {
+    // Load configuration options from action inputs
     const options = getOptions();
 
+    // Initialize prompt templates with configured options
     const prompts = new Prompts(options);
 
+    // Get pull request context information from GitHub context
     const prContext = getPrContext();
 
+    // Create authenticated GitHub API client
     const octokit = getOctokit(token);
 
-    const reviewer = new Reviewer(octokit, options);
+    // Initialize commenter for posting review comments
+    const commenter = new Commenter(octokit, prContext);
 
+    // Create reviewer instance with GitHub client and options
+    const reviewer = new Reviewer(octokit, commenter, options);
+
+    // Fetch files changed in the pull request with diff information
     const changes = await getChangedFiles(octokit);
 
+    // Generate and post a summary of the PR changes
     await reviewer.summarizeChanges({
       prContext,
       prompts,
       changes,
     });
 
+    // Review code changes and post feedback comments
     await reviewer.reviewChanges({
       prContext,
       prompts,

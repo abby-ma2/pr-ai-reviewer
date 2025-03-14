@@ -31805,6 +31805,43 @@ function requireGithub () {
 
 var githubExports = requireGithub();
 
+class Commenter {
+    octokit;
+    prContext;
+    constructor(octokit, prContext) {
+        this.octokit = octokit;
+        this.prContext = prContext;
+    }
+    /**
+     * Creates a review comment on a specific file in a pull request.
+     *
+     * @param filename - The path of the file to comment on
+     * @param review - The review comment object containing comment text and line information
+     * @returns A Promise that resolves when the comment is successfully created
+     */
+    async createReviewComment(filename, review) {
+        // Define base request and conditional parameters separately
+        const baseRequest = {
+            owner: this.prContext.owner,
+            repo: this.prContext.repo,
+            pull_number: this.prContext.pullRequestNumber,
+            commit_id: this.prContext.commentId,
+            path: filename,
+            body: review.comment,
+        };
+        // Set line parameters appropriately
+        const requestParams = review.startLine === review.endLine
+            ? { ...baseRequest, line: review.endLine }
+            : {
+                ...baseRequest,
+                start_line: review.startLine,
+                line: review.endLine,
+            };
+        const reviewCommentResult = await this.octokit.rest.pulls.createReviewComment(requestParams);
+        if (reviewCommentResult.status === 201) ;
+    }
+}
+
 /**
  * Class that holds context information for a pull request
  * Stores pull request related data and handles chatbot creation
@@ -45040,7 +45077,7 @@ const createChatBotFromModel = (modelName, options) => {
     throw new Error(`Unsupported model: ${modelName}`);
 };
 
-/**hp
+/**
  * Reviewer class responsible for performing code reviews using a chatbot.
  * It initializes with configuration options and creates the appropriate chatbot instance.
  */
@@ -45050,6 +45087,15 @@ class Reviewer {
      * @private
      */
     options;
+    /**
+     * Commenter instance used to post review comments to GitHub.
+     * @private
+     */
+    commenter;
+    /**
+     * GitHub API client instance.
+     * @private
+     */
     octokit;
     /**
      * The chatbot instance used for generating review comments.
@@ -45058,13 +45104,23 @@ class Reviewer {
     chatbot;
     /**
      * Creates a new Reviewer instance.
+     * @param octokit - GitHub API client instance
+     * @param commenter - Commenter instance for posting comments
      * @param options - Configuration options for the reviewer and chatbot
      */
-    constructor(octokit, options) {
+    constructor(octokit, commenter, options) {
         this.octokit = octokit;
+        this.commenter = commenter;
         this.options = options;
         this.chatbot = createChatBotFromModel(this.options.model, this.options);
     }
+    /**
+     * Generates summaries for each file change in a pull request.
+     *
+     * @param prContext - Context information about the pull request
+     * @param prompts - Prompt templates for generating summaries
+     * @param changes - List of files changed in the pull request
+     */
     async summarizeChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {
             const prompt = prompts.renderSummarizeFileDiff(prContext, change);
@@ -45072,7 +45128,15 @@ class Reviewer {
             coreExports.debug(`Summary: ${change.filename} \n ${summary}\n`);
             prContext.appendChangeSummary(change.filename, summary);
         }
+        // update description
     }
+    /**
+     * Reviews code changes in a pull request and posts review comments.
+     *
+     * @param prContext - Context information about the pull request
+     * @param prompts - Prompt templates for generating reviews
+     * @param changes - List of files changed in the pull request
+     */
     async reviewChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {
             for (const diff of change.diff) {
@@ -45084,25 +45148,7 @@ class Reviewer {
                     if (review.isLGTM) {
                         continue;
                     }
-                    // Define base request and conditional parameters separately
-                    const baseRequest = {
-                        owner: prContext.owner,
-                        repo: prContext.repo,
-                        pull_number: prContext.pullRequestNumber,
-                        commit_id: prContext.commentId,
-                        path: change.filename,
-                        body: review.comment,
-                    };
-                    // Set line parameters appropriately
-                    const requestParams = review.startLine === review.endLine
-                        ? { ...baseRequest, line: review.endLine }
-                        : {
-                            ...baseRequest,
-                            start_line: review.startLine,
-                            line: review.endLine,
-                        };
-                    const reviewCommentResult = await this.octokit.rest.pulls.createReviewComment(requestParams);
-                    if (reviewCommentResult.status === 201) ;
+                    await this.commenter.createReviewComment(change.filename, review);
                 }
             }
         }
@@ -45190,14 +45236,19 @@ class FileDiff {
     }
 }
 
+/**
+ * Retrieves all configuration options from action inputs.
+ *
+ * @returns Configured Options instance
+ */
 const getOptions = () => {
     return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getInput("max_files"), coreExports.getBooleanInput("review_simple_changes"), coreExports.getBooleanInput("review_comment_lgtm"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_message"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("base_url"), coreExports.getInput("language"));
 };
 const token = process.env.GITHUB_TOKEN || "";
 /**
- * Gets the PR context
+ * Gets the PR context information from GitHub action context
  *
- * @returns PR context
+ * @returns Pull request context object
  */
 const getPrContext = () => {
     const repo = githubExports.context.repo;
@@ -45205,10 +45256,10 @@ const getPrContext = () => {
     return new PullRequestContext(repo.owner, pull_request?.title, repo.repo, pull_request?.body || "", pull_request?.number || 0, pull_request?.head?.sha);
 };
 /**
- * Gets the changed files
+ * Fetches and processes the changed files in a pull request
  *
- * @param octokit GitHub client
- * @returns Array of changed files
+ * @param octokit - GitHub API client
+ * @returns Array of changed files with parsed diff information
  */
 const getChangedFiles = async (octokit) => {
     const pull_request = githubExports.context.payload.pull_request;
@@ -45260,17 +45311,27 @@ const getChangedFiles = async (octokit) => {
  */
 async function run() {
     try {
+        // Load configuration options from action inputs
         const options = getOptions();
+        // Initialize prompt templates with configured options
         const prompts = new Prompts(options);
+        // Get pull request context information from GitHub context
         const prContext = getPrContext();
+        // Create authenticated GitHub API client
         const octokit = githubExports.getOctokit(token);
-        const reviewer = new Reviewer(octokit, options);
+        // Initialize commenter for posting review comments
+        const commenter = new Commenter(octokit, prContext);
+        // Create reviewer instance with GitHub client and options
+        const reviewer = new Reviewer(octokit, commenter, options);
+        // Fetch files changed in the pull request with diff information
         const changes = await getChangedFiles(octokit);
+        // Generate and post a summary of the PR changes
         await reviewer.summarizeChanges({
             prContext,
             prompts,
             changes,
         });
+        // Review code changes and post feedback comments
         await reviewer.reviewChanges({
             prContext,
             prompts,
