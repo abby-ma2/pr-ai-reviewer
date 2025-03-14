@@ -113,6 +113,32 @@ const defaultFooter = `
 IMPORTANT: We will communicate in $language.
 `;
 
+const summarizeFileDiff = `
+## GitHub PR Title
+
+\`$title\` 
+
+## Description
+
+\`\`\`
+$description
+\`\`\`
+
+## Diff
+
+$filename
+
+\`\`\`diff
+$fileDiff
+\`\`\`
+
+## Instructions
+
+I would like you to succinctly summarize the diff.
+If applicable, your summary should include a note about alterations 
+to the signatures of exported functions, global data structures and 
+variables, and any changes`;
+
 /**
  * Class responsible for generating and managing prompts used for PR reviews.
  * Handles the templating of review prompts with contextual information.
@@ -137,6 +163,18 @@ export class Prompts {
    * @returns Formatted review prompt string with all placeholders replaced
    */
   renderReviewPrompt(ctx: PullRequestContext, change: ChangeFile): string {
+    const data = {
+      title: ctx.title,
+      description: ctx.description || "",
+      fileDiff: change.renderHunk(),
+      filename: change.filename || "",
+      language: this.options.language || "",
+    };
+
+    return this.renderTemplate(summarizeFileDiff, data);
+  }
+
+  renderSummarizeFileDiff(ctx: PullRequestContext, change: ChangeFile): string {
     const data = {
       title: ctx.title,
       description: ctx.description || "",

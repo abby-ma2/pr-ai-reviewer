@@ -72,4 +72,36 @@ export class GeminiClient implements ChatBot {
       return "Failed to review this file due to an API error.";
     }
   }
+
+  async chat(ctx: PullRequestContext, prompt: string): Promise<string> {
+    try {
+      // Call the Gemini API
+      const result = await this.model.generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          // maxOutputTokens: 2000,
+        },
+      });
+
+      return result.response.text();
+    } catch (error) {
+      warning(
+        `Failed to review code for: ${error instanceof Error ? error.message : String(error)}`,
+      );
+
+      // Retry logic
+      if (this.options.retries > 0) {
+        this.options.retries--;
+        return this.chat(ctx, prompt);
+      }
+
+      return "Failed to review this file due to an API error.";
+    }
+  }
 }

@@ -34195,6 +34195,7 @@ Consider:
 3. Performance optimizations
 4. Readability and maintainability
 5. Any security concerns
+
 Suggest improvements and explain your reasoning for each suggestion.
 - Do NOT provide general feedback, summaries, explanations of changes, or praises
   for making good additions.
@@ -34264,6 +34265,31 @@ $patches
 const defaultFooter = `
 IMPORTANT: We will communicate in $language.
 `;
+const summarizeFileDiff = `
+## GitHub PR Title
+
+\`$title\` 
+
+## Description
+
+\`\`\`
+$description
+\`\`\`
+
+## Diff
+
+$filename
+
+\`\`\`diff
+$fileDiff
+\`\`\`
+
+## Instructions
+
+I would like you to succinctly summarize the diff.
+If applicable, your summary should include a note about alterations 
+to the signatures of exported functions, global data structures and 
+variables, and any changes`;
 /**
  * Class responsible for generating and managing prompts used for PR reviews.
  * Handles the templating of review prompts with contextual information.
@@ -34288,6 +34314,16 @@ class Prompts {
      * @returns Formatted review prompt string with all placeholders replaced
      */
     renderReviewPrompt(ctx, change) {
+        const data = {
+            title: ctx.title,
+            description: ctx.description || "",
+            fileDiff: change.renderHunk(),
+            filename: change.filename || "",
+            language: this.options.language || "",
+        };
+        return this.renderTemplate(summarizeFileDiff, data);
+    }
+    renderSummarizeFileDiff(ctx, change) {
         const data = {
             title: ctx.title,
             description: ctx.description || "",
@@ -37861,6 +37897,29 @@ class ClaudeClient {
             return "Failed to review this file due to an API error.";
         }
     }
+    async chat(ctx, prompt) {
+        try {
+            // Call Claude API
+            const result = await this.client.messages.create({
+                model: this.model,
+                system: this.options.systemMessage,
+                messages: [{ role: "user", content: prompt }],
+                max_tokens: 8096,
+                temperature: 0.1,
+            });
+            const res = result.content[0];
+            return res.type === "text" ? res.text : "";
+        }
+        catch (error) {
+            coreExports.warning(`Failed to review code for : ${error instanceof Error ? error.message : String(error)}`);
+            // Retry logic
+            if (this.options.retries > 0) {
+                this.options.retries--;
+                return this.chat(ctx, prompt);
+            }
+            return "Failed to review this file due to an API error.";
+        }
+    }
 }
 
 /**
@@ -39368,6 +39427,33 @@ class GeminiClient {
             if (this.options.retries > 0) {
                 this.options.retries--;
                 return this.reviewCode(ctx, prompt);
+            }
+            return "Failed to review this file due to an API error.";
+        }
+    }
+    async chat(ctx, prompt) {
+        try {
+            // Call the Gemini API
+            const result = await this.model.generateContent({
+                contents: [
+                    {
+                        role: "user",
+                        parts: [{ text: prompt }],
+                    },
+                ],
+                generationConfig: {
+                    temperature: 0.1,
+                    // maxOutputTokens: 2000,
+                },
+            });
+            return result.response.text();
+        }
+        catch (error) {
+            coreExports.warning(`Failed to review code for: ${error instanceof Error ? error.message : String(error)}`);
+            // Retry logic
+            if (this.options.retries > 0) {
+                this.options.retries--;
+                return this.chat(ctx, prompt);
             }
             return "Failed to review this file due to an API error.";
         }
@@ -44874,6 +44960,27 @@ class OpenAIClient {
             return "Failed to review this file due to an API error.";
         }
     }
+    async chat(ctx, prompt) {
+        try {
+            // Call the OpenAI API
+            const response = await this.client.chat.completions.create({
+                model: getModelName(this.options.model),
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.1,
+                // max_tokens: 2000,
+            });
+            return response.choices[0]?.message?.content || "";
+        }
+        catch (error) {
+            coreExports.warning(`Failed to review code for : ${error instanceof Error ? error.message : String(error)}`);
+            // Retry logic
+            if (this.options.retries > 0) {
+                this.options.retries--;
+                return this.chat(ctx, prompt);
+            }
+            return "Failed to review this file due to an API error.";
+        }
+    }
 }
 
 // This module defines the ChatBot interface and factory function to create chatbot instances
@@ -44931,13 +45038,19 @@ class Reviewer {
         this.options = options;
         this.chatbot = createChatBotFromModel(this.options.model, this.options);
     }
+    async summarizeChanges({ prContext, prompts, changes, }) {
+        for (const change of changes) {
+            const prompt = prompts.renderSummarizeFileDiff(prContext, change);
+            const summary = await this.chatbot.chat(prContext, prompt);
+            coreExports.debug(`Summary: ${change.filename} ${summary}\n`);
+        }
+    }
     async reviewChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {
-            const reviewPrompt = await prompts.renderReviewPrompt(prContext, change);
-            coreExports.info(`Prompt: ${reviewPrompt}\n`);
+            const reviewPrompt = prompts.renderReviewPrompt(prContext, change);
+            // debug(`Prompt: ${reviewPrompt}\n`);
             const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
             const reviews = parseReviewComment(reviewComment);
-            coreExports.info(`Review: ${JSON.stringify(reviews, null, 2)}`);
             for (const review of reviews) {
                 if (review.isLGTM) {
                     continue;
@@ -44960,9 +45073,7 @@ class Reviewer {
                         line: review.endLine,
                     };
                 const reviewCommentResult = await this.octokit.rest.pulls.createReviewComment(requestParams);
-                if (reviewCommentResult.status === 201) {
-                    coreExports.info(`Comment created: ${reviewCommentResult.data.html_url}`);
-                }
+                if (reviewCommentResult.status === 201) ;
             }
         }
     }
@@ -45092,8 +45203,18 @@ const getChangedFiles = async (octokit) => {
 };
 /**
  * The main function for the action.
+ * This function orchestrates the entire PR review process:
+ * 1. Gets the options from inputs
+ * 2. Creates prompt templates
+ * 3. Retrieves the PR context
+ * 4. Initializes the GitHub client
+ * 5. Creates a reviewer instance
+ * 6. Fetches changed files in the PR
+ * 7. Generates a summary of changes
+ * 8. Reviews code changes and posts comments
  *
- * @returns Resolves when the action is complete.
+ * @returns {Promise<void>} Resolves when the action is complete.
+ * @throws {Error} If any part of the process fails
  */
 async function run() {
     try {
@@ -45103,7 +45224,16 @@ async function run() {
         const octokit = githubExports.getOctokit(token);
         const reviewer = new Reviewer(octokit, options);
         const changes = await getChangedFiles(octokit);
-        await reviewer.reviewChanges({ prContext, prompts, changes });
+        await reviewer.summarizeChanges({
+            prContext,
+            prompts,
+            changes,
+        });
+        await reviewer.reviewChanges({
+            prContext,
+            prompts,
+            changes,
+        });
     }
     catch (error) {
         // Fail the workflow run if an error occurs

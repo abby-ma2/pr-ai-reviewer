@@ -43,6 +43,21 @@ export class Reviewer {
 
     this.chatbot = createChatBotFromModel(this.options.model, this.options);
   }
+  async summarizeChanges({
+    prContext,
+    prompts,
+    changes,
+  }: {
+    prContext: PullRequestContext;
+    prompts: Prompts;
+    changes: ChangeFile[];
+  }) {
+    for (const change of changes) {
+      const prompt = prompts.renderSummarizeFileDiff(prContext, change);
+      const summary = await this.chatbot.chat(prContext, prompt);
+      debug(`Summary: ${change.filename} ${summary}\n`);
+    }
+  }
 
   async reviewChanges({
     prContext,

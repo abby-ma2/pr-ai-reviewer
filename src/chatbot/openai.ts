@@ -64,4 +64,29 @@ export class OpenAIClient implements ChatBot {
       return "Failed to review this file due to an API error.";
     }
   }
+  async chat(ctx: PullRequestContext, prompt: string): Promise<string> {
+    try {
+      // Call the OpenAI API
+      const response = await this.client.chat.completions.create({
+        model: getModelName(this.options.model),
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.1,
+        // max_tokens: 2000,
+      });
+
+      return response.choices[0]?.message?.content || "";
+    } catch (error) {
+      warning(
+        `Failed to review code for : ${error instanceof Error ? error.message : String(error)}`,
+      );
+
+      // Retry logic
+      if (this.options.retries > 0) {
+        this.options.retries--;
+        return this.chat(ctx, prompt);
+      }
+
+      return "Failed to review this file due to an API error.";
+    }
+  }
 }

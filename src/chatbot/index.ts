@@ -17,6 +17,8 @@ export interface ChatBot {
    * @returns Promise resolving to review comments as string
    */
   reviewCode(ctx: PullRequestContext, prompt: string): Promise<string>;
+
+  chat(ctx: PullRequestContext, prompt: string): Promise<string>;
 }
 
 /**

@@ -30,6 +30,11 @@ export declare class Reviewer {
      * @param options - Configuration options for the reviewer and chatbot
      */
     constructor(octokit: InstanceType<typeof GitHub>, options: Options);
+    summarizeChanges({ prContext, prompts, changes, }: {
+        prContext: PullRequestContext;
+        prompts: Prompts;
+        changes: ChangeFile[];
+    }): Promise<void>;
     reviewChanges({ prContext, prompts, changes, }: {
         prContext: PullRequestContext;
         prompts: Prompts;

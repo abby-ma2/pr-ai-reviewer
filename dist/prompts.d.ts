@@ -21,6 +21,7 @@ export declare class Prompts {
      * @returns Formatted review prompt string with all placeholders replaced
      */
     renderReviewPrompt(ctx: PullRequestContext, change: ChangeFile): string;
+    renderSummarizeFileDiff(ctx: PullRequestContext, change: ChangeFile): string;
     /**
      * Renders a template string by replacing placeholders with provided values.
      * @param template - Template string containing placeholders in the format $key or ${key}

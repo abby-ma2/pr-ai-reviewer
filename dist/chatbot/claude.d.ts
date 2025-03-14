@@ -13,4 +13,5 @@ export declare class ClaudeClient implements ChatBot {
      * @returns Review comment
      */
     reviewCode(ctx: PullRequestContext, prompt: string): Promise<string>;
+    chat(ctx: PullRequestContext, prompt: string): Promise<string>;
 }

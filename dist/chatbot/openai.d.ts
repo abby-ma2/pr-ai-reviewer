@@ -12,4 +12,5 @@ export declare class OpenAIClient implements ChatBot {
      * @returns Review comments
      */
     reviewCode(ctx: PullRequestContext, prompt: string): Promise<string>;
+    chat(ctx: PullRequestContext, prompt: string): Promise<string>;
 }

@@ -13,4 +13,5 @@ export declare class GeminiClient implements ChatBot {
      * @returns Review comments
      */
     reviewCode(ctx: PullRequestContext, prompt: string): Promise<string>;
+    chat(ctx: PullRequestContext, prompt: string): Promise<string>;
 }
