@@ -34287,7 +34287,7 @@ $patches
 I would like you to succinctly summarize the diff.
 If applicable, your summary should include a note about alterations
 to the signatures of exported functions, global data structures and
-variables, and any changes`;
+variables, and any changes`; // TODO add output format
 /**
  * Class responsible for generating and managing prompts used for PR reviews.
  * Handles the templating of review prompts with contextual information.
@@ -34308,16 +34308,16 @@ class Prompts {
     /**
      * Renders a review prompt for a specific file change in a pull request.
      * @param ctx - Pull request context containing metadata like title and description
-     * @param change - File change information with diff content
+     * @param diff - File change information with diff content
      * @returns Formatted review prompt string with all placeholders replaced
      */
-    renderReviewPrompt(ctx, change) {
+    renderReviewPrompt(ctx, diff) {
         const data = {
             title: ctx.title,
             description: ctx.description || "",
-            filename: change.filename || "",
+            filename: diff.filename || "",
             language: this.options.language || "",
-            patches: change.renderHunk(),
+            patches: diff.renderHunk(),
         };
         return this.renderTemplate(reviewFileDiff, data);
     }
@@ -34327,7 +34327,7 @@ class Prompts {
             description: ctx.description || "",
             filename: change.filename || "",
             language: this.options.language || "",
-            patches: change.renderHunk(),
+            patches: change.patch,
         };
         return this.renderTemplate(summarizeFileDiff, data);
     }
@@ -45045,33 +45045,35 @@ class Reviewer {
     }
     async reviewChanges({ prContext, prompts, changes, }) {
         for (const change of changes) {
-            const reviewPrompt = prompts.renderReviewPrompt(prContext, change);
-            // debug(`Prompt: ${reviewPrompt}\n`);
-            const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
-            const reviews = parseReviewComment(reviewComment);
-            for (const review of reviews) {
-                if (review.isLGTM) {
-                    continue;
-                }
-                // Define base request and conditional parameters separately
-                const baseRequest = {
-                    owner: prContext.owner,
-                    repo: prContext.repo,
-                    pull_number: prContext.pullRequestNumber,
-                    commit_id: prContext.commentId,
-                    path: change.filename,
-                    body: review.comment,
-                };
-                // Set line parameters appropriately
-                const requestParams = review.startLine === review.endLine
-                    ? { ...baseRequest, line: review.endLine }
-                    : {
-                        ...baseRequest,
-                        start_line: review.startLine,
-                        line: review.endLine,
+            for (const diff of change.diff) {
+                const reviewPrompt = prompts.renderReviewPrompt(prContext, diff);
+                // debug(`Prompt: ${reviewPrompt}\n`);
+                const reviewComment = await this.chatbot.reviewCode(prContext, reviewPrompt);
+                const reviews = parseReviewComment(reviewComment);
+                for (const review of reviews) {
+                    if (review.isLGTM) {
+                        continue;
+                    }
+                    // Define base request and conditional parameters separately
+                    const baseRequest = {
+                        owner: prContext.owner,
+                        repo: prContext.repo,
+                        pull_number: prContext.pullRequestNumber,
+                        commit_id: prContext.commentId,
+                        path: change.filename,
+                        body: review.comment,
                     };
-                const reviewCommentResult = await this.octokit.rest.pulls.createReviewComment(requestParams);
-                if (reviewCommentResult.status === 201) ;
+                    // Set line parameters appropriately
+                    const requestParams = review.startLine === review.endLine
+                        ? { ...baseRequest, line: review.endLine }
+                        : {
+                            ...baseRequest,
+                            start_line: review.startLine,
+                            line: review.endLine,
+                        };
+                    const reviewCommentResult = await this.octokit.rest.pulls.createReviewComment(requestParams);
+                    if (reviewCommentResult.status === 201) ;
+                }
             }
         }
     }
@@ -45128,9 +45130,9 @@ class ChangeFile {
     deletions;
     changes;
     url;
-    from;
-    to;
-    constructor(filename, sha, status, additions, deletions, changes, url, from, to) {
+    patch;
+    diff;
+    constructor(filename, sha, status, additions, deletions, changes, url, patch, diff) {
         this.filename = filename;
         this.sha = sha;
         this.status = status;
@@ -45138,6 +45140,16 @@ class ChangeFile {
         this.deletions = deletions;
         this.changes = changes;
         this.url = url;
+        this.patch = patch;
+        this.diff = diff;
+    }
+}
+class FileDiff {
+    filename;
+    from;
+    to;
+    constructor(filename, from, to) {
+        this.filename = filename;
         this.from = from;
         this.to = to;
     }
@@ -45188,14 +45200,16 @@ const getChangedFiles = async (octokit) => {
         if (!file.patch) {
             continue;
         }
+        const changeFile = new ChangeFile(file.filename, file.sha, file.status, file.additions, file.deletions, file.changes, file.contents_url, file.patch, []);
         const results = parsePatch({
             filename: file.filename,
             patch: file.patch,
         });
         for (const result of results) {
-            const changeFile = new ChangeFile(file.filename, file.sha, file.status, file.additions, file.deletions, file.changes, file.contents_url, result.from, result.to);
-            changes.push(changeFile);
+            const diff = new FileDiff(file.filename, result.from, result.to);
+            changeFile.diff.push(diff);
         }
+        changes.push(changeFile);
     }
     return changes;
 };

@@ -9,6 +9,14 @@ export class ChangeFile {
     public deletions: number,
     public changes: number,
     public url: string,
+    public patch: string,
+    public diff: FileDiff[],
+  ) {}
+}
+
+export class FileDiff {
+  constructor(
+    public filename: string,
     public from: Hunk,
     public to: Hunk,
   ) {}

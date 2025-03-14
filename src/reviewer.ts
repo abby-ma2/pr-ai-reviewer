@@ -69,46 +69,48 @@ export class Reviewer {
     changes: ChangeFile[];
   }) {
     for (const change of changes) {
-      const reviewPrompt = prompts.renderReviewPrompt(prContext, change);
+      for (const diff of change.diff) {
+        const reviewPrompt = prompts.renderReviewPrompt(prContext, diff);
 
-      // debug(`Prompt: ${reviewPrompt}\n`);
+        // debug(`Prompt: ${reviewPrompt}\n`);
 
-      const reviewComment = await this.chatbot.reviewCode(
-        prContext,
-        reviewPrompt,
-      );
+        const reviewComment = await this.chatbot.reviewCode(
+          prContext,
+          reviewPrompt,
+        );
 
-      const reviews = parseReviewComment(reviewComment);
+        const reviews = parseReviewComment(reviewComment);
 
-      for (const review of reviews) {
-        if (review.isLGTM) {
-          continue;
-        }
+        for (const review of reviews) {
+          if (review.isLGTM) {
+            continue;
+          }
 
-        // Define base request and conditional parameters separately
-        const baseRequest = {
-          owner: prContext.owner,
-          repo: prContext.repo,
-          pull_number: prContext.pullRequestNumber,
-          commit_id: prContext.commentId,
-          path: change.filename,
-          body: review.comment,
-        };
+          // Define base request and conditional parameters separately
+          const baseRequest = {
+            owner: prContext.owner,
+            repo: prContext.repo,
+            pull_number: prContext.pullRequestNumber,
+            commit_id: prContext.commentId,
+            path: change.filename,
+            body: review.comment,
+          };
 
-        // Set line parameters appropriately
-        const requestParams =
-          review.startLine === review.endLine
-            ? { ...baseRequest, line: review.endLine }
-            : {
-                ...baseRequest,
-                start_line: review.startLine,
-                line: review.endLine,
-              };
+          // Set line parameters appropriately
+          const requestParams =
+            review.startLine === review.endLine
+              ? { ...baseRequest, line: review.endLine }
+              : {
+                  ...baseRequest,
+                  start_line: review.startLine,
+                  line: review.endLine,
+                };
 
-        const reviewCommentResult =
-          await this.octokit.rest.pulls.createReviewComment(requestParams);
-        if (reviewCommentResult.status === 201) {
-          // debug(`Comment created: ${reviewCommentResult.data.html_url}`);
+          const reviewCommentResult =
+            await this.octokit.rest.pulls.createReviewComment(requestParams);
+          if (reviewCommentResult.status === 201) {
+            // debug(`Comment created: ${reviewCommentResult.data.html_url}`);
+          }
         }
       }
     }

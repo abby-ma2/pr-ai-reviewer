@@ -1,6 +1,6 @@
 import type { PullRequestContext } from "./context.js";
 import type { Options } from "./option.js";
-import type { ChangeFile } from "./types.js";
+import type { ChangeFile, FileDiff } from "./types.js";
 /**
  * Class responsible for generating and managing prompts used for PR reviews.
  * Handles the templating of review prompts with contextual information.
@@ -17,10 +17,10 @@ export declare class Prompts {
     /**
      * Renders a review prompt for a specific file change in a pull request.
      * @param ctx - Pull request context containing metadata like title and description
-     * @param change - File change information with diff content
+     * @param diff - File change information with diff content
      * @returns Formatted review prompt string with all placeholders replaced
      */
-    renderReviewPrompt(ctx: PullRequestContext, change: ChangeFile): string;
+    renderReviewPrompt(ctx: PullRequestContext, diff: FileDiff): string;
     renderSummarizeFileDiff(ctx: PullRequestContext, change: ChangeFile): string;
     /**
      * Renders a template string by replacing placeholders with provided values.

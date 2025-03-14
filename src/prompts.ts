@@ -1,7 +1,7 @@
 import { debug } from "@actions/core";
 import type { PullRequestContext } from "./context.js";
 import type { Options } from "./option.js";
-import type { ChangeFile } from "./types.js";
+import type { ChangeFile, FileDiff } from "./types.js";
 
 /**
  * Template for the pull request review prompt.
@@ -135,7 +135,7 @@ $patches
 I would like you to succinctly summarize the diff.
 If applicable, your summary should include a note about alterations
 to the signatures of exported functions, global data structures and
-variables, and any changes`;
+variables, and any changes`; // TODO add output format
 
 /**
  * Class responsible for generating and managing prompts used for PR reviews.
@@ -157,16 +157,16 @@ export class Prompts {
   /**
    * Renders a review prompt for a specific file change in a pull request.
    * @param ctx - Pull request context containing metadata like title and description
-   * @param change - File change information with diff content
+   * @param diff - File change information with diff content
    * @returns Formatted review prompt string with all placeholders replaced
    */
-  renderReviewPrompt(ctx: PullRequestContext, change: ChangeFile): string {
+  renderReviewPrompt(ctx: PullRequestContext, diff: FileDiff): string {
     const data = {
       title: ctx.title,
       description: ctx.description || "",
-      filename: change.filename || "",
+      filename: diff.filename || "",
       language: this.options.language || "",
-      patches: change.renderHunk(),
+      patches: diff.renderHunk(),
     };
 
     return this.renderTemplate(reviewFileDiff, data);
@@ -178,7 +178,7 @@ export class Prompts {
       description: ctx.description || "",
       filename: change.filename || "",
       language: this.options.language || "",
-      patches: change.renderHunk(),
+      patches: change.patch,
     };
 
     return this.renderTemplate(summarizeFileDiff, data);
