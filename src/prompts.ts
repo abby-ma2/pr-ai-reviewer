@@ -134,6 +134,14 @@ Analyze the provided patch format file diff and summarize it according to the fo
 3. If the purpose of the diff changes can be clearly read from the patch content, include the purpose in one line in the summary. If the purpose is unclear, the purpose description is unnecessary.
 4. Output only the summary, and no additional explanations or comments are needed.
 
+**Output format:**
+
+* [Summary 1]
+* [Summary 2]
+* [Summary 3]
+* [Summary 4]
+* [Summary 5]
+
 ## Diff
 
 $filename
