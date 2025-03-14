@@ -45332,14 +45332,19 @@ async function run() {
         const reviewer = new Reviewer(octokit, commenter, options);
         // Fetch files changed in the pull request with diff information
         const changes = await getChangedFiles(octokit);
-        // Generate and post a summary of the PR changes
-        const summary = await reviewer.summarizeChanges({
-            prContext,
-            prompts,
-            changes,
-        });
-        // Update the PR description with the generated summary
-        await commenter.updateDescription(summary);
+        if (!options.disableReleaseNotes) {
+            // Generate and post a summary of the PR changes
+            const summary = await reviewer.summarizeChanges({
+                prContext,
+                prompts,
+                changes,
+            });
+            // Update the PR description with the generated summary
+            await commenter.updateDescription(summary);
+        }
+        if (options.disableReview) {
+            return;
+        }
         // Review code changes and post feedback comments
         await reviewer.reviewChanges({
             prContext,
