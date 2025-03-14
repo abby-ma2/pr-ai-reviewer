@@ -34268,7 +34268,7 @@ IMPORTANT: We will communicate in $language.
 const summarizeFileDiff = `
 ## GitHub PR Title
 
-\`$title\` 
+\`$title\`
 
 ## Description
 
@@ -34280,15 +34280,13 @@ $description
 
 $filename
 
-\`\`\`diff
-$fileDiff
-\`\`\`
+$patches
 
 ## Instructions
 
 I would like you to succinctly summarize the diff.
-If applicable, your summary should include a note about alterations 
-to the signatures of exported functions, global data structures and 
+If applicable, your summary should include a note about alterations
+to the signatures of exported functions, global data structures and
 variables, and any changes`;
 /**
  * Class responsible for generating and managing prompts used for PR reviews.
@@ -34317,9 +34315,9 @@ class Prompts {
         const data = {
             title: ctx.title,
             description: ctx.description || "",
-            fileDiff: change.renderHunk(),
             filename: change.filename || "",
             language: this.options.language || "",
+            patches: change.renderHunk(),
         };
         return this.renderTemplate(reviewFileDiff, data);
     }
