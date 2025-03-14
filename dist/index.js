@@ -45356,7 +45356,7 @@ const token = process.env.GITHUB_TOKEN || "";
 const getPrContext = () => {
     const repo = githubExports.context.repo;
     const pull_request = githubExports.context.payload.pull_request;
-    coreExports.info(`Pull request context: ${JSON.stringify(pull_request)}`);
+    coreExports.info(`Pull request context: ${JSON.stringify(pull_request, null, 2)}`);
     return new PullRequestContext(repo.owner, pull_request?.title, repo.repo, pull_request?.body || "", pull_request?.number || 0, pull_request?.head?.sha);
 };
 /**
@@ -45422,6 +45422,7 @@ async function run() {
         // Get pull request context information from GitHub context
         const prContext = getPrContext();
         // Create authenticated GitHub API client
+        coreExports.info(`description:${prContext.description}`);
         const octokit = githubExports.getOctokit(token);
         const { data: comments } = await octokit.rest.issues.listComments({
             owner: prContext.owner,
