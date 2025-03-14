@@ -68,6 +68,7 @@ const getPrContext = (): PullRequestContext => {
  * @throws Error if the commit information cannot be found
  */
 const getChangedFiles = async (
+  options: Options,
   octokit: ReturnType<typeof getOctokit>,
 ): Promise<ChangeFile[]> => {
   const pull_request = context.payload.pull_request;
@@ -94,7 +95,9 @@ const getChangedFiles = async (
     if (!file.patch) {
       continue;
     }
-
+    if (!options.checkPath(file.filename)) {
+      continue;
+    }
     const changeFile = new ChangeFile(
       file.filename,
       file.sha,
@@ -165,7 +168,7 @@ export async function run(): Promise<void> {
     const reviewer = new Reviewer(octokit, commenter, options);
 
     // Fetch files changed in the pull request with diff information
-    const changes = await getChangedFiles(octokit);
+    const changes = await getChangedFiles(options, octokit);
 
     if (!options.disableReleaseNotes) {
       // Generate and post a summary of the PR changes

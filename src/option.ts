@@ -65,7 +65,7 @@ export class Options {
    */
   checkPath(path: string): boolean {
     const ok = this.pathFilters.check(path);
-    core.info(`checking path: ${path} => ${ok}`);
+    core.debug(`checking path: ${path} => ${ok}`);
     return ok;
   }
 }
