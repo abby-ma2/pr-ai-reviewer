@@ -224,12 +224,16 @@ export class Prompts {
    * @param diff - File change information with diff content
    * @returns Formatted review prompt string with all placeholders replaced
    */
-  renderReviewPrompt(ctx: PullRequestContext, diff: FileDiff): string {
+  renderReviewPrompt(
+    ctx: PullRequestContext,
+    summary: string,
+    diff: FileDiff,
+  ): string {
     const data = {
       title: ctx.title,
       description: ctx.description || "",
       filename: diff.filename || "",
-      changeSummary: ctx.getChangeSummary(),
+      changeSummary: summary,
       patches: diff.renderHunk(),
     };
 
