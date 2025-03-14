@@ -1,6 +1,9 @@
 # PR AI Reviewer
 
-PR AI Reviewer is a GitHub Action that leverages artificial intelligence to automatically review pull requests. This tool helps development teams improve code quality and maintain consistency by providing automated feedback on code changes.
+PR AI Reviewer is a GitHub Action that leverages artificial intelligence to
+automatically review pull requests. This tool helps development teams improve
+code quality and maintain consistency by providing automated feedback on code
+changes.
 
 ## Features
 
@@ -13,7 +16,9 @@ PR AI Reviewer is a GitHub Action that leverages artificial intelligence to auto
 
 ## How It Works
 
-When a pull request is opened or updated, PR AI Reviewer scans the changed files and provides intelligent comments directly in the PR conversation. The AI model examines:
+When a pull request is opened or updated, PR AI Reviewer scans the changed files
+and provides intelligent comments directly in the PR conversation. The AI model
+examines:
 
 - Code style and formatting consistency
 - Potential bugs and logic errors
@@ -46,12 +51,12 @@ jobs:
 
 ## Configuration Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `github-token` | GitHub token for API access | Required |
-| `review-level` | Depth of review (basic, standard, thorough) | `standard` |
-| `ignored-files` | Patterns for files to ignore | None |
-| `comment-threshold` | Minimum severity to create comments | `info` |
+| Option              | Description                                 | Default    |
+| ------------------- | ------------------------------------------- | ---------- |
+| `github-token`      | GitHub token for API access                 | Required   |
+| `review-level`      | Depth of review (basic, standard, thorough) | `standard` |
+| `ignored-files`     | Patterns for files to ignore                | None       |
+| `comment-threshold` | Minimum severity to create comments         | `info`     |
 
 ---
 
@@ -150,7 +155,7 @@ There are a few things to keep in mind when writing your action code:
   In `main.ts`, you will see that the action is run in an `async` function.
 
   ```javascript
-  import * as core from '@actions/core'
+  import * as core from "@actions/core"
   //...
 
   async function run() {

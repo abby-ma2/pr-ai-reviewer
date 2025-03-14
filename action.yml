@@ -1,15 +1,15 @@
-name: 'AI-based PR Reviewer & Summarizer'
-description: 'AI-based PR Reviewer & Summarizer'
+name: "AI-based PR Reviewer & Summarizer"
+description: "AI-based PR Reviewer & Summarizer"
 branding:
-  icon: 'git-merge'
-  color: 'orange'
-author: 'abby-ma2'
+  icon: "git-merge"
+  color: "orange"
+author: "abby-ma2"
 
 inputs:
   debug:
     required: false
-    description: 'Enable debug mode'
-    default: 'false'
+    description: "Enable debug mode"
+    default: "false"
   path_filters:
     required: false
     description: |
@@ -125,38 +125,37 @@ inputs:
       !**/*.tfstate.backup
   disable_review:
     required: false
-    description: 'Only provide the summary and skip the code review.'
-    default: 'false'
+    description: "Only provide the summary and skip the code review."
+    default: "false"
   disable_release_notes:
     required: false
-    description: 'Disable release notes'
-    default: 'false'
+    description: "Disable release notes"
+    default: "false"
   summary_model:
     required: true
     description:
-      'Model to use for simple tasks like summarizing diff on a file.'
-    default: 'openai/gpt-3.5-turbo'
+      "Model to use for simple tasks like summarizing diff on a file."
+    default: "openai/gpt-3.5-turbo"
   model:
     required: true
-    description:
-      'Model to use for review tasks.'
-    default: 'openai/gpt-4o'
+    description: "Model to use for review tasks."
+    default: "openai/gpt-4o"
   retries:
     required: false
     description:
-      'How many times to retry OpenAI API in case of timeouts or errors?'
-    default: '5'
+      "How many times to retry OpenAI API in case of timeouts or errors?"
+    default: "5"
   timeout_ms:
     required: false
-    description: 'Timeout for OpenAI API call in millis'
-    default: '360000'
+    description: "Timeout for OpenAI API call in millis"
+    default: "360000"
   release_notes_title:
     required: false
-    description: 'Title for the release notes'
-    default: 'Key Changes'
+    description: "Title for the release notes"
+    default: "Key Changes"
   system_prompt:
     required: false
-    description: 'System message to be sent to LLM'
+    description: "System message to be sent to LLM"
     default: |
       You are a highly meticulous and logically rigorous software development assistant.  
       Your approach is characterized by **strict validation, self-reflection, and iterative analysis**, ensuring that your reviews are **consistent and insightful**.  
@@ -184,13 +183,13 @@ inputs:
       - Maintain **consistent evaluation criteria** to ensure stable and reliable feedback.  
       - Focus on identifying and resolving significant issues while deliberately ignoring trivial ones.  
       - Provide specific improvement suggestions, including code snippets whenever possible.  
-      - Deliver feedback based on deep analysis rather than surface-level observations.  
+      - Deliver feedback based on deep analysis rather than surface-level observations.
 
   summarize_release_notes:
     required: false
     description:
-      'The prompt for generating release notes in the same chat as summarize
-      stage'
+      "The prompt for generating release notes in the same chat as summarize
+      stage"
     default: |
       Craft concise release notes for the pull request.
       Focus on the purpose and user impact, categorizing changes as "New Feature", "Bug Fix",

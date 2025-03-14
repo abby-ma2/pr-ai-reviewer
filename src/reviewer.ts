@@ -1,17 +1,17 @@
-import { debug } from "@actions/core";
-import { type ChatBot, createChatBotFromModel } from "./chatbot/index.js";
-import type { Commenter } from "./commenter.js";
-import type { PullRequestContext } from "./context.js";
-import type { Options } from "./option.js";
-import type { Prompts } from "./prompts.js";
-import type { ChangeFile } from "./types.js";
+import { debug } from "@actions/core"
+import { type ChatBot, createChatBotFromModel } from "./chatbot/index.js"
+import type { Commenter } from "./commenter.js"
+import type { PullRequestContext } from "./context.js"
+import type { Options } from "./option.js"
+import type { Prompts } from "./prompts.js"
+import type { ChangeFile } from "./types.js"
 
 export type ReviewComment = {
-  startLine: number;
-  endLine: number;
-  comment: string;
-  isLGTM: boolean;
-};
+  startLine: number
+  endLine: number
+  comment: string
+  isLGTM: boolean
+}
 
 /**
  * Reviewer class responsible for performing code reviews using a chatbot.
@@ -22,25 +22,25 @@ export class Reviewer {
    * Configuration options for the reviewer.
    * @private
    */
-  private options: Options;
+  private options: Options
 
   /**
    * Commenter instance used to post review comments to GitHub.
    * @private
    */
-  private commenter: Commenter;
+  private commenter: Commenter
 
   /**
    * ChatBot instance used for generating summaries of changes.
    * @private
    */
-  private summaryBot: ChatBot;
+  private summaryBot: ChatBot
 
   /**
    * The chatbot instance used for generating review comments.
    * @private
    */
-  private reviewBot: ChatBot;
+  private reviewBot: ChatBot
 
   /**
    * Creates a new Reviewer instance.
@@ -49,13 +49,13 @@ export class Reviewer {
    * @param options - Configuration options for the reviewer and chatbot
    */
   constructor(commenter: Commenter, options: Options) {
-    this.commenter = commenter;
-    this.options = options;
+    this.commenter = commenter
+    this.options = options
     this.summaryBot = createChatBotFromModel(
       this.options.summaryModel,
-      this.options,
-    );
-    this.reviewBot = createChatBotFromModel(this.options.model, this.options);
+      this.options
+    )
+    this.reviewBot = createChatBotFromModel(this.options.model, this.options)
   }
 
   /**
@@ -70,32 +70,32 @@ export class Reviewer {
   async summarizeChanges({
     prContext,
     prompts,
-    changes,
+    changes
   }: {
-    prContext: PullRequestContext;
-    prompts: Prompts;
-    changes: ChangeFile[];
+    prContext: PullRequestContext
+    prompts: Prompts
+    changes: ChangeFile[]
   }): Promise<string> {
     // Process each file change and generate individual summaries
     for (const change of changes) {
       // Create a prompt specific to this file's changes
-      const prompt = prompts.renderSummarizeFileDiff(prContext, change);
+      const prompt = prompts.renderSummarizeFileDiff(prContext, change)
       // Generate summary for this specific file change using the chatbot
-      const summary = await this.summaryBot.create(prContext, prompt);
+      const summary = await this.summaryBot.create(prContext, prompt)
 
       // set the summary in the change object
-      change.summary = summary;
+      change.summary = summary
       // Log the summary for debugging purposes
-      debug(`Summary: ${change.filename} \n ${summary}\n`);
+      debug(`Summary: ${change.filename} \n ${summary}\n`)
       // Store the summary in the PR context for later compilation
-      prContext.appendChangeSummary(change.filename, summary);
+      prContext.appendChangeSummary(change.filename, summary)
     }
 
     // Get the compiled summary of all file changes
-    const message = prContext.getChangeSummary();
+    const message = prContext.getChangeSummary()
     // Generate a comprehensive release note based on all file summaries
-    const prompt = prompts.renderSummarizeReleaseNote(message);
-    return await this.summaryBot.create(prContext, prompt);
+    const prompt = prompts.renderSummarizeReleaseNote(message)
+    return await this.summaryBot.create(prContext, prompt)
   }
 
   /**
@@ -112,35 +112,35 @@ export class Reviewer {
   async reviewChanges({
     prContext,
     prompts,
-    changes,
+    changes
   }: {
-    prContext: PullRequestContext;
-    prompts: Prompts;
-    changes: ChangeFile[];
+    prContext: PullRequestContext
+    prompts: Prompts
+    changes: ChangeFile[]
   }) {
     for (const change of changes) {
       for (const diff of change.diff) {
         const reviewPrompt = prompts.renderReviewPrompt(
           prContext,
           change.summary,
-          diff,
-        );
+          diff
+        )
 
         // Debug the review prompt
         // debug(`Prompt: ${reviewPrompt}\n`);
 
         const reviewComment = await this.reviewBot.create(
           prContext,
-          reviewPrompt,
-        );
-        debug(`Review comment: ${diff.filename}\n${reviewComment}`);
-        const reviews = parseReviewComment(reviewComment);
+          reviewPrompt
+        )
+        debug(`Review comment: ${diff.filename}\n${reviewComment}`)
+        const reviews = parseReviewComment(reviewComment)
 
         for (const review of reviews) {
           if (review.isLGTM) {
-            continue;
+            continue
           }
-          await this.commenter.createReviewComment(change.filename, review);
+          await this.commenter.createReviewComment(change.filename, review)
         }
       }
     }
@@ -151,7 +151,7 @@ export class Reviewer {
    * Logs the options for debugging purposes.
    */
   debug(): void {
-    debug(`${this.options}`);
+    debug(`${this.options}`)
   }
 }
 
@@ -166,35 +166,35 @@ export class Reviewer {
 export const parseReviewComment = (reviewComment: string): ReviewComment[] => {
   // Return empty array for empty comments
   if (!reviewComment || reviewComment.trim().length === 0) {
-    return [];
+    return []
   }
 
   // Split by separator
   const sections = reviewComment
     .split("---")
-    .filter((section) => section.trim().length > 0);
-  const result: ReviewComment[] = [];
+    .filter((section) => section.trim().length > 0)
+  const result: ReviewComment[] = []
 
   for (const section of sections) {
     // Extract line numbers and comment content
-    const match = section.trim().match(/^(\d+)-(\d+):?\s*([\s\S]+)$/);
+    const match = section.trim().match(/^(\d+)-(\d+):?\s*([\s\S]+)$/)
 
     if (match) {
-      const startLine = Number.parseInt(match[1], 10);
-      const endLine = Number.parseInt(match[2], 10);
-      const comment = match[3].trim();
+      const startLine = Number.parseInt(match[1], 10)
+      const endLine = Number.parseInt(match[2], 10)
+      const comment = match[3].trim()
 
       // Check if comment contains LGTM
-      const isLGTM = comment.toLowerCase().includes("lgtm!");
+      const isLGTM = comment.toLowerCase().includes("lgtm!")
 
       result.push({
         startLine,
         endLine,
         comment,
-        isLGTM,
-      });
+        isLGTM
+      })
     }
   }
 
-  return result;
-};
+  return result
+}

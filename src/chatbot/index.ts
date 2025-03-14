@@ -1,16 +1,16 @@
 // This module defines the ChatBot interface and factory function to create chatbot instances
 
-import type { PullRequestContext } from "../context.js";
-import type { Options } from "../option.js";
-import { ClaudeClient } from "./claude.js";
-import { GeminiClient } from "./gemini.js";
-import { OpenAIClient } from "./openai.js";
+import type { PullRequestContext } from "../context.js"
+import type { Options } from "../option.js"
+import { ClaudeClient } from "./claude.js"
+import { GeminiClient } from "./gemini.js"
+import { OpenAIClient } from "./openai.js"
 
 /**
  * Interface for chatbot clients that can review code
  */
 export interface ChatBot {
-  create(ctx: PullRequestContext, prompt: string): Promise<string>;
+  create(ctx: PullRequestContext, prompt: string): Promise<string>
 }
 
 /**
@@ -19,9 +19,9 @@ export interface ChatBot {
  * @returns The model portion of the identifier, or the original string if no provider prefix
  */
 export const getModelName = (name: string): string => {
-  const parts = name.split("/");
-  return parts.length > 1 ? parts[1] : name;
-};
+  const parts = name.split("/")
+  return parts.length > 1 ? parts[1] : name
+}
 
 /**
  * Factory function to create appropriate ChatBot implementation based on model name
@@ -32,17 +32,17 @@ export const getModelName = (name: string): string => {
  */
 export const createChatBotFromModel = (
   modelName: string,
-  options: Options,
+  options: Options
 ): ChatBot => {
   if (modelName.startsWith("openai/")) {
-    return new OpenAIClient(options);
+    return new OpenAIClient(options)
   }
   if (modelName.startsWith("google/")) {
-    return new GeminiClient(options);
+    return new GeminiClient(options)
   }
   if (modelName.startsWith("anthropic/")) {
-    return new ClaudeClient(options);
+    return new ClaudeClient(options)
   }
 
-  throw new Error(`Unsupported model: ${modelName}`);
-};
+  throw new Error(`Unsupported model: ${modelName}`)
+}

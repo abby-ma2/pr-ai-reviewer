@@ -31828,7 +31828,7 @@ class Commenter {
         const pr = await this.octokit.rest.pulls.get({
             owner: owner,
             repo: repo,
-            pull_number: pullRequestNumber,
+            pull_number: pullRequestNumber
         });
         // Get the current description of the pull request
         const body = pr.data.body || "";
@@ -31841,7 +31841,7 @@ class Commenter {
             owner,
             repo,
             pull_number: pullRequestNumber,
-            body: newDescription,
+            body: newDescription
         });
     }
     /**
@@ -31859,7 +31859,7 @@ class Commenter {
             pull_number: this.prContext.pullRequestNumber,
             commit_id: this.prContext.commentId,
             path: filename,
-            body: review.comment,
+            body: review.comment
         };
         // Set line parameters appropriately
         const requestParams = review.startLine === review.endLine
@@ -31867,7 +31867,7 @@ class Commenter {
             : {
                 ...baseRequest,
                 start_line: review.startLine,
-                line: review.endLine,
+                line: review.endLine
             };
         const reviewCommentResult = await this.octokit.rest.pulls.createReviewComment(requestParams);
         if (reviewCommentResult.status === 201) ;
@@ -34144,7 +34144,7 @@ const parseChunkHeader = (line) => {
         fromCount: Number.parseInt(headerMatch[2], 10),
         toStart: Number.parseInt(headerMatch[3], 10),
         toCount: Number.parseInt(headerMatch[4], 10),
-        firstLine: headerMatch[5],
+        firstLine: headerMatch[5]
     };
 };
 /**
@@ -34242,7 +34242,7 @@ const processChunk = (lines, startIndex, filename) => {
             startLine: fromStart,
             lineCount: fromCount,
             content: fromContent,
-            branch: origBranch,
+            branch: origBranch
         },
         to: {
             filename,
@@ -34250,12 +34250,12 @@ const processChunk = (lines, startIndex, filename) => {
             lineCount: toCount,
             content: toContent,
             branch: modBranch,
-            commitId: modCommitId,
-        },
+            commitId: modCommitId
+        }
     };
     return { result, nextIndex: i };
 };
-const parsePatch = ({ filename, patch, }) => {
+const parsePatch = ({ filename, patch }) => {
     const results = [];
     if (!patch) {
         return results;
@@ -34472,7 +34472,7 @@ class Prompts {
      */
     renderSummarizeReleaseNote(message) {
         const data = {
-            changeSummary: message,
+            changeSummary: message
         };
         return this.renderTemplate(this.summarizePrefix + this.summarizeReleaseNote, data);
     }
@@ -34487,7 +34487,7 @@ class Prompts {
             title: ctx.title,
             description: ctx.description || "",
             filename: change.filename || "",
-            patch: change.patch,
+            patch: change.patch
         };
         return this.renderTemplate(summarizeFileDiff, data);
     }
@@ -34503,7 +34503,7 @@ class Prompts {
             description: ctx.description || "",
             filename: diff.filename || "",
             changeSummary: summary,
-            patches: renderFileDiffHunk(diff),
+            patches: renderFileDiffHunk(diff)
         };
         return this.renderTemplate(reviewFileDiff, data);
     }
@@ -38036,7 +38036,7 @@ class ClaudeClient {
     constructor(options) {
         this.options = options;
         this.client = new Anthropic({
-            apiKey: apiKey$2,
+            apiKey: apiKey$2
         });
         this.model = getModelName(options.model) || defaultModel$1;
         if (this.options.debug) {
@@ -38052,7 +38052,7 @@ class ClaudeClient {
                 system: this.options.systemPrompt,
                 messages: [{ role: "user", content: prompt }],
                 max_tokens: 8192,
-                temperature: 0.1,
+                temperature: 0.1
             });
             const res = result.content[0];
             return res.type === "text" ? res.text : "";
@@ -39534,9 +39534,9 @@ class GeminiClient {
         this.client = new GoogleGenerativeAI(apiKey$1);
         this.model = this.client.getGenerativeModel({
             systemInstruction: {
-                text: options.systemPrompt, // System prompt for the model
+                text: options.systemPrompt // System prompt for the model
             },
-            model: getModelName(options.model) || defaultModel,
+            model: getModelName(options.model) || defaultModel
         });
         if (this.options.debug) {
             coreExports.debug("Gemini client initialized");
@@ -39550,13 +39550,13 @@ class GeminiClient {
                 contents: [
                     {
                         role: "user",
-                        parts: [{ text: prompt }],
-                    },
+                        parts: [{ text: prompt }]
+                    }
                 ],
                 generationConfig: {
-                    temperature: 0.1,
+                    temperature: 0.1
                     // maxOutputTokens: 2000,
-                },
+                }
             });
             return result.response.text();
         }
@@ -45030,7 +45030,7 @@ class OpenAIClient {
     constructor(options) {
         this.options = options;
         this.client = new OpenAI({
-            apiKey: apiKey,
+            apiKey: apiKey
         });
         if (this.options.debug) {
             coreExports.debug(`Using model: ${options.model}`);
@@ -45043,9 +45043,9 @@ class OpenAIClient {
                 model: getModelName(this.options.model),
                 messages: [
                     { role: "system", content: this.options.systemPrompt },
-                    { role: "user", content: prompt },
+                    { role: "user", content: prompt }
                 ],
-                temperature: 0.1,
+                temperature: 0.1
                 // max_tokens: 2000,
             });
             return response.choices[0]?.message?.content || "";
@@ -45138,7 +45138,7 @@ class Reviewer {
      * @param changes - List of files changed in the pull request
      * @returns A promise that resolves to a string containing the generated release note summary
      */
-    async summarizeChanges({ prContext, prompts, changes, }) {
+    async summarizeChanges({ prContext, prompts, changes }) {
         // Process each file change and generate individual summaries
         for (const change of changes) {
             // Create a prompt specific to this file's changes
@@ -45169,7 +45169,7 @@ class Reviewer {
      * @param changes - List of files changed in the pull request
      * @returns A promise that resolves when all reviews are completed and comments are posted
      */
-    async reviewChanges({ prContext, prompts, changes, }) {
+    async reviewChanges({ prContext, prompts, changes }) {
         for (const change of changes) {
             for (const diff of change.diff) {
                 const reviewPrompt = prompts.renderReviewPrompt(prContext, change.summary, diff);
@@ -45226,7 +45226,7 @@ const parseReviewComment = (reviewComment) => {
                 startLine,
                 endLine,
                 comment,
-                isLGTM,
+                isLGTM
             });
         }
     }
@@ -45274,7 +45274,7 @@ const getChangedFiles = async (options, octokit) => {
         owner: repo.owner,
         repo: repo.repo,
         base: pull_request.base.sha,
-        head: pull_request.head.sha,
+        head: pull_request.head.sha
     });
     const changes = [];
     if (!targetBranchDiff.data.files) {
@@ -45298,17 +45298,17 @@ const getChangedFiles = async (options, octokit) => {
             patch: file.patch,
             summary: "",
             content: undefined,
-            diff: [],
+            diff: []
         };
         const results = parsePatch({
             filename: file.filename,
-            patch: file.patch,
+            patch: file.patch
         });
         for (const result of results) {
             const diff = {
                 filename: file.filename,
                 from: result.from,
-                to: result.to,
+                to: result.to
             };
             changeFile.diff.push(diff);
         }
@@ -45339,7 +45339,7 @@ async function run() {
         const prompts = new Prompts(options);
         // replace system prompt with the one from options
         const systemPrompt = prompts.renderTemplate(options.systemPrompt, {
-            language: options.language,
+            language: options.language
         });
         // Update the system prompt in options
         options.systemPrompt = systemPrompt;
@@ -45358,7 +45358,7 @@ async function run() {
             const summary = await reviewer.summarizeChanges({
                 prContext,
                 prompts,
-                changes,
+                changes
             });
             // Update the PR description with the generated summary
             await commenter.updateDescription(summary);
@@ -45370,7 +45370,7 @@ async function run() {
         await reviewer.reviewChanges({
             prContext,
             prompts,
-            changes,
+            changes
         });
     }
     catch (error) {

@@ -1,4 +1,4 @@
-import { parsePatch } from "../src/patchParser";
+import { parsePatch } from "../src/patchParser"
 
 describe("parsePatch", () => {
   it("should parse patch correctly", () => {
@@ -20,9 +20,9 @@ describe("parsePatch", () => {
 +    debug("error");
      // Fail the workflow run if an error occurs
      if (error instanceof Error) {
-       setFailed(error.message);`;
+       setFailed(error.message);`
 
-    const results = parsePatch({ filename: "filename", patch });
+    const results = parsePatch({ filename: "filename", patch })
 
     expect(results[0].from).toEqual({
       filename: "filename",
@@ -37,9 +37,9 @@ describe("parsePatch", () => {
         "   getMultilineInput,",
         "   info,",
         "   setFailed,",
-        ' } from "@actions/core";',
-      ],
-    });
+        ' } from "@actions/core";'
+      ]
+    })
     expect(results[0].to).toEqual({
       filename: "filename",
       startLine: 2,
@@ -54,9 +54,9 @@ describe("parsePatch", () => {
         "5 +  debug,",
         "6    info,",
         "7    setFailed,",
-        '8  } from "@actions/core";',
-      ],
-    });
+        '8  } from "@actions/core";'
+      ]
+    })
 
     expect(results[1].from).toEqual({
       filename: "filename",
@@ -72,9 +72,9 @@ describe("parsePatch", () => {
         "   } catch (error) {",
         "     // Fail the workflow run if an error occurs",
         "     if (error instanceof Error) {",
-        "       setFailed(error.message);",
-      ],
-    });
+        "       setFailed(error.message);"
+      ]
+    })
     expect(results[1].to).toEqual({
       filename: "filename",
       startLine: 80,
@@ -92,10 +92,10 @@ describe("parsePatch", () => {
         '86 +    debug("error");',
         "87      // Fail the workflow run if an error occurs",
         "88      if (error instanceof Error) {",
-        "89        setFailed(error.message);",
-      ],
-    });
-  });
+        "89        setFailed(error.message);"
+      ]
+    })
+  })
 
   it("should parse patch with conflict markers correctly", () => {
     const patch = `@@ -85,6 +85,10 @@ export async function run(): Promise<void> {
@@ -108,9 +108,9 @@ describe("parsePatch", () => {
 +>>>>>>> 9b50671 (wip)
    } catch (error) {
      // Fail the workflow run if an error occurs
-     if (error instanceof Error) {`;
+     if (error instanceof Error) {`
 
-    const results = parsePatch({ filename: "filename", patch });
+    const results = parsePatch({ filename: "filename", patch })
 
     expect(results[0].from).toEqual({
       filename: "filename",
@@ -125,9 +125,9 @@ describe("parsePatch", () => {
         "     });",
         "   } catch (error) {",
         "     // Fail the workflow run if an error occurs",
-        "     if (error instanceof Error) {",
-      ], // 変更前コードは空
-    });
+        "     if (error instanceof Error) {"
+      ] // 変更前コードは空
+    })
     expect(results[0].to).toEqual({
       filename: "filename",
       startLine: 85,
@@ -142,8 +142,8 @@ describe("parsePatch", () => {
         '88 +    info("done");',
         "89    } catch (error) {",
         "90      // Fail the workflow run if an error occurs",
-        "91      if (error instanceof Error) {",
-      ],
-    });
-  });
-});
+        "91      if (error instanceof Error) {"
+      ]
+    })
+  })
+})
