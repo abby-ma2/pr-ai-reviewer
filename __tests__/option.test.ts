@@ -23,6 +23,7 @@ describe("Options", () => {
         "60000",
         "ja",
         "Please summarize the changes",
+        "Release Notes Title",
       );
 
       expect(options.debug).toBe(true);
@@ -57,6 +58,7 @@ describe("Options", () => {
         "",
         "0",
         "0",
+        "",
         "",
         "",
       );

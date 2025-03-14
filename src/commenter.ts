@@ -1,5 +1,6 @@
 import type { GitHub } from "@actions/github/lib/utils.js";
 import type { PullRequestContext } from "./context.js";
+import type { Options } from "./option.js";
 import type { ReviewComment } from "./reviewer.js";
 
 export const DESCRIPTION_START_TAG =
@@ -8,13 +9,16 @@ export const DESCRIPTION_END_TAG =
   "<!-- end of auto-generated comment: release notes -->";
 
 export class Commenter {
+  private options: Options;
   private octokit: InstanceType<typeof GitHub>;
   private prContext: PullRequestContext;
 
   constructor(
+    options: Options,
     octokit: InstanceType<typeof GitHub>,
     prContext: PullRequestContext,
   ) {
+    this.options = options;
     this.octokit = octokit;
     this.prContext = prContext;
   }
@@ -43,7 +47,7 @@ export class Commenter {
     );
 
     // Append the new content to the existing description
-    const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n### Key Change:\n${cleaned}\n${DESCRIPTION_END_TAG}`;
+    const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n### ${this.options.releaseNotesTitle}:\n${cleaned}\n${DESCRIPTION_END_TAG}`;
 
     // Update the pull request description
     await this.octokit.rest.pulls.update({

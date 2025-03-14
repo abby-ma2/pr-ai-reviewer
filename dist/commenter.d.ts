@@ -1,12 +1,14 @@
 import type { GitHub } from "@actions/github/lib/utils.js";
 import type { PullRequestContext } from "./context.js";
+import type { Options } from "./option.js";
 import type { ReviewComment } from "./reviewer.js";
 export declare const DESCRIPTION_START_TAG = "<!-- This is an auto-generated comment: release notes -->";
 export declare const DESCRIPTION_END_TAG = "<!-- end of auto-generated comment: release notes -->";
 export declare class Commenter {
+    private options;
     private octokit;
     private prContext;
-    constructor(octokit: InstanceType<typeof GitHub>, prContext: PullRequestContext);
+    constructor(options: Options, octokit: InstanceType<typeof GitHub>, prContext: PullRequestContext);
     /**
      * Updates the pull request description with a provided message.
      * The message is wrapped between special tags to be identifiable.

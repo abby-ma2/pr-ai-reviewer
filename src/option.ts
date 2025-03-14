@@ -13,6 +13,7 @@ export class Options {
   timeoutMS: number;
   language: string;
   summarizeReleaseNotes: string;
+  releaseNotesTitle: string;
 
   constructor(
     debug: boolean,
@@ -26,6 +27,7 @@ export class Options {
     timeoutMS: string,
     language: string,
     summarizeReleaseNotes: string,
+    releaseNotesTitle: string,
   ) {
     this.debug = debug;
     this.disableReview = disableReview;
@@ -38,6 +40,7 @@ export class Options {
     this.timeoutMS = Number.parseInt(timeoutMS);
     this.language = language;
     this.summarizeReleaseNotes = summarizeReleaseNotes;
+    this.releaseNotesTitle = releaseNotesTitle;
   }
 
   /**
@@ -56,6 +59,7 @@ export class Options {
     info(`openai_timeout_ms: ${this.timeoutMS}`);
     info(`language: ${this.language}`);
     info(`summarize_release_notes: ${this.summarizeReleaseNotes}`);
+    info(`release_notes_title: ${this.releaseNotesTitle}`);
   }
 
   /**

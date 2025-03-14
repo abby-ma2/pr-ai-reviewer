@@ -31808,9 +31808,11 @@ var githubExports = requireGithub();
 const DESCRIPTION_START_TAG = "<!-- This is an auto-generated comment: release notes -->";
 const DESCRIPTION_END_TAG = "<!-- end of auto-generated comment: release notes -->";
 class Commenter {
+    options;
     octokit;
     prContext;
-    constructor(octokit, prContext) {
+    constructor(options, octokit, prContext) {
+        this.options = options;
         this.octokit = octokit;
         this.prContext = prContext;
     }
@@ -31833,7 +31835,7 @@ class Commenter {
         const description = this.getDescription(body);
         const cleaned = this.removeContentWithinTags(message, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG);
         // Append the new content to the existing description
-        const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n### Key Change:\n${cleaned}\n${DESCRIPTION_END_TAG}`;
+        const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n### ${this.options.releaseNotesTitle}:\n${cleaned}\n${DESCRIPTION_END_TAG}`;
         // Update the pull request description
         await this.octokit.rest.pulls.update({
             owner,
@@ -34014,7 +34016,8 @@ class Options {
     timeoutMS;
     language;
     summarizeReleaseNotes;
-    constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, summaryModel, model, retries, timeoutMS, language, summarizeReleaseNotes) {
+    releaseNotesTitle;
+    constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, summaryModel, model, retries, timeoutMS, language, summarizeReleaseNotes, releaseNotesTitle) {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
@@ -34026,6 +34029,7 @@ class Options {
         this.timeoutMS = Number.parseInt(timeoutMS);
         this.language = language;
         this.summarizeReleaseNotes = summarizeReleaseNotes;
+        this.releaseNotesTitle = releaseNotesTitle;
     }
     /**
      * Prints all configuration options using core.info for debugging purposes.
@@ -34043,6 +34047,7 @@ class Options {
         coreExports.info(`openai_timeout_ms: ${this.timeoutMS}`);
         coreExports.info(`language: ${this.language}`);
         coreExports.info(`summarize_release_notes: ${this.summarizeReleaseNotes}`);
+        coreExports.info(`release_notes_title: ${this.releaseNotesTitle}`);
     }
     /**
      * Checks if a file path should be included based on configured path filters.
@@ -45278,7 +45283,7 @@ class FileDiff {
  * @returns Configured Options instance with all action parameters
  */
 const getOptions = () => {
-    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("summary_model"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"));
+    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("summary_model"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"), coreExports.getInput("release_notes_title"));
 };
 const token = process.env.GITHUB_TOKEN || "";
 /**
@@ -45370,7 +45375,7 @@ async function run() {
         // Create authenticated GitHub API client
         const octokit = githubExports.getOctokit(token);
         // Initialize commenter for posting review comments
-        const commenter = new Commenter(octokit, prContext);
+        const commenter = new Commenter(options, octokit, prContext);
         // Create reviewer instance with GitHub client and options
         const reviewer = new Reviewer(commenter, options);
         // Fetch files changed in the pull request with diff information
