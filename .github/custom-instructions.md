@@ -7,7 +7,7 @@ will create a GitHub Action that uses an LLM to perform code reviews. Please
 develop the application while confirming necessary specifications. We will
 communicate in Japanese. Please write comments in the code in English.
 
-# List the following technology stack:
+# List the following technology stack
 
 - TypeScript
 - GitHub Actions
