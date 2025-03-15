@@ -95,7 +95,7 @@ export class Reviewer {
     const message = prContext.getChangeSummary()
     // Generate a comprehensive release note based on all file summaries
     const prompt = prompts.renderSummarizeReleaseNote(message)
-    debug(`Release note prompt: ${prompt}`)
+    debug(`Release Note prompt: ${JSON.stringify(prompt, null, 2)}`)
     return await this.summaryBot.create(prContext, prompt)
   }
 
@@ -124,13 +124,13 @@ export class Reviewer {
         const reviewPrompt = prompts.renderReviewPrompt(prContext, change, diff)
 
         // Debug the review prompt
-        debug(`Review Prompt: ${reviewPrompt}\n`)
+        debug(`Review prompt: ${JSON.stringify(reviewPrompt, null, 2)}`)
 
         const reviewComment = await this.reviewBot.create(
           prContext,
           reviewPrompt
         )
-        debug(`Review comment: ${diff.filename}\n${reviewComment}`)
+        debug(`Review comment: ${diff.filename} : ${reviewComment}`)
         const reviews = parseReviewComment(reviewComment)
 
         for (const review of reviews) {

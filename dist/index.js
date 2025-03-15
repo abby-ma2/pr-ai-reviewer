@@ -46469,7 +46469,7 @@ class Reviewer {
         const message = prContext.getChangeSummary();
         // Generate a comprehensive release note based on all file summaries
         const prompt = prompts.renderSummarizeReleaseNote(message);
-        coreExports.debug(`Release note prompt: ${prompt}`);
+        coreExports.debug(`Release Note prompt: ${JSON.stringify(prompt, null, 2)}`);
         return await this.summaryBot.create(prContext, prompt);
     }
     /**
@@ -46488,9 +46488,9 @@ class Reviewer {
             for (const diff of change.diff) {
                 const reviewPrompt = prompts.renderReviewPrompt(prContext, change, diff);
                 // Debug the review prompt
-                coreExports.debug(`Review Prompt: ${reviewPrompt}\n`);
+                coreExports.debug(`Review prompt: ${JSON.stringify(reviewPrompt, null, 2)}`);
                 const reviewComment = await this.reviewBot.create(prContext, reviewPrompt);
-                coreExports.debug(`Review comment: ${diff.filename}\n${reviewComment}`);
+                coreExports.debug(`Review comment: ${diff.filename} : ${reviewComment}`);
                 const reviews = parseReviewComment(reviewComment);
                 for (const review of reviews) {
                     if (review.isLGTM) {
