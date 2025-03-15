@@ -2,7 +2,7 @@ import { debug, warning } from "@actions/core"
 import OpenAI from "openai"
 import type { PullRequestContext } from "../context.js"
 import type { Options } from "../option.js"
-import { type ChatBot, getModelName } from "./index.js"
+import { type ChatBot, type Message, getModelName } from "./index.js"
 
 const apiKey = process.env.OPENAI_API_KEY || ""
 
@@ -21,14 +21,17 @@ export class OpenAIClient implements ChatBot {
     }
   }
 
-  async create(ctx: PullRequestContext, prompt: string): Promise<string> {
+  async create(ctx: PullRequestContext, prompts: Message[]): Promise<string> {
     try {
       // Call the OpenAI API
       const response = await this.client.chat.completions.create({
         model: getModelName(this.options.model),
         messages: [
-          { role: "system", content: this.options.systemPrompt },
-          { role: "user", content: prompt }
+          { role: "system", content: this.options.systemPrompt } as const,
+          ...prompts.map((prompt) => ({
+            role: prompt.role as "user" | "assistant" | "system",
+            content: prompt.text
+          }))
         ],
         temperature: 0.1
         // max_tokens: 2000,
@@ -43,7 +46,7 @@ export class OpenAIClient implements ChatBot {
       // Retry logic
       if (this.options.retries > 0) {
         this.options.retries--
-        return this.create(ctx, prompt)
+        return this.create(ctx, prompts)
       }
 
       return "Failed to review this file due to an API error."

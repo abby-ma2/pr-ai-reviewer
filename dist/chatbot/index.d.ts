@@ -5,14 +5,14 @@ import type { Options } from "../option.js";
  */
 export type Message = {
     text: string;
-    role: "user" | "assistant" | "system";
+    role: string;
     cache?: boolean;
 };
 /**
  * Interface for chatbot clients that can review code
  */
 export interface ChatBot {
-    create(ctx: PullRequestContext, prompt: string): Promise<string>;
+    create(ctx: PullRequestContext, prompts: Message[]): Promise<string>;
 }
 /**
  * Extract the model name from a full model identifier string

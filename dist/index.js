@@ -34310,7 +34310,7 @@ Limit the response to 50–100 words. Clearly highlight changes that affect end 
  * Contains placeholders for title, description, summary, filename, and patches.
  * Provides instructions for the AI reviewer on how to format responses.
  */
-const reviewFileDiff = `
+const reviewFileDiffPrefix = `
 ## GitHub PR Title
 
 \`$title\`
@@ -34407,11 +34407,13 @@ There's a syntax error in the add function.
 LGTM!
 ---
 
+`;
+const reviewFileDiff = `
 ## Changes made to \`$filename\` for your review
 
 $patches
 `;
-const summarizeFileDiff = `
+const summarizeFileDiffPrefix = `
 ## GitHub PR Title
 
 \`$title\`
@@ -34439,6 +34441,8 @@ Analyze the provided patch format file diff and summarize it according to the fo
 * [Summary 4]
 * [Summary 5]
 
+`;
+const summarizeFileDiff = `
 ## Diff
 
 $filename
@@ -34471,10 +34475,16 @@ class Prompts {
      * @returns Formatted release note prompt string with the change summary inserted
      */
     renderSummarizeReleaseNote(message) {
+        const prompts = [];
         const data = {
             changeSummary: message
         };
-        return this.renderTemplate(this.summarizePrefix + this.summarizeReleaseNote, data);
+        prompts.push({
+            role: "user",
+            text: this.renderTemplate(this.summarizePrefix + this.summarizeReleaseNote, data, true),
+            cache: true
+        });
+        return prompts;
     }
     /**
      * Renders a summary prompt for a specific file change in a pull request.
@@ -34483,13 +34493,25 @@ class Prompts {
      * @returns Formatted summary prompt string with all placeholders replaced
      */
     renderSummarizeFileDiff(ctx, change) {
+        const prompts = [];
         const data = {
             title: ctx.title,
             description: ctx.description || "",
             filename: change.filename || "",
             patch: change.patch
         };
-        return this.renderTemplate(summarizeFileDiff, data);
+        // cache the first prompt
+        prompts.push({
+            role: "user",
+            text: this.renderTemplate(summarizeFileDiffPrefix, data),
+            cache: true
+        });
+        // diff
+        prompts.push({
+            role: "user",
+            text: this.renderTemplate(summarizeFileDiff, data, true)
+        });
+        return prompts;
     }
     /**
      * Renders a review prompt for a specific file change in a pull request.
@@ -34498,6 +34520,7 @@ class Prompts {
      * @returns Formatted review prompt string with all placeholders replaced
      */
     renderReviewPrompt(ctx, summary, diff) {
+        const prompts = [];
         const data = {
             title: ctx.title,
             description: ctx.description || "",
@@ -34505,18 +34528,30 @@ class Prompts {
             changeSummary: summary,
             patches: renderFileDiffHunk(diff)
         };
-        return this.renderTemplate(reviewFileDiff, data);
+        // cache the first prompt
+        prompts.push({
+            role: "user",
+            text: this.renderTemplate(reviewFileDiffPrefix, data),
+            cache: true
+        });
+        // diff
+        prompts.push({
+            role: "user",
+            text: this.renderTemplate(reviewFileDiff, data, true)
+        });
+        return prompts;
     }
     /**
      * Renders a template string by replacing placeholders with provided values.
      * @param template - Template string containing placeholders in the format $key or ${key}
      * @param values - Object containing key-value pairs for placeholder replacement
-     * @returns Formatted string with all placeholders replaced and footer appended
+     * @param addFooter - Whether to append the footer to the template (defaults to false)
+     * @returns Formatted string with all placeholders replaced and footer appended if requested
      */
-    renderTemplate(template, values) {
-        values.language = this.options.language || "English";
+    renderTemplate(template, values, addFooter = false) {
+        values.language = this.options.language || "en-US";
         // add footer
-        let result = `${template}\n\n---\n\n${this.footer}\n`;
+        let result = addFooter ? `${template}\n\n---\n${this.footer}` : template;
         for (const [key, value] of Object.entries(values)) {
             const placeholder1 = `$${key}`;
             const placeholder2 = `\${${key}}`;
@@ -38044,13 +38079,25 @@ class ClaudeClient {
             coreExports.debug(`Using model: ${this.model}`);
         }
     }
-    async create(ctx, prompt) {
+    async create(ctx, prompts) {
         try {
+            // TODO prompt caching
             // Call Claude API
             const result = await this.client.messages.create({
                 model: this.model,
                 system: this.options.systemPrompt,
-                messages: [{ role: "user", content: prompt }],
+                messages: [
+                    {
+                        role: "user",
+                        content: prompts.map((prompt) => {
+                            return {
+                                cache_control: prompt.cache ? { type: "ephemeral" } : null,
+                                text: prompt.text,
+                                type: "text"
+                            };
+                        })
+                    }
+                ],
                 max_tokens: 8192,
                 temperature: 0.1
             });
@@ -38062,7 +38109,7 @@ class ClaudeClient {
             // Retry logic
             if (this.options.retries > 0) {
                 this.options.retries--;
-                return this.create(ctx, prompt);
+                return this.create(ctx, prompts);
             }
             return "Failed to review this file due to an API error.";
         }
@@ -39543,14 +39590,17 @@ class GeminiClient {
             coreExports.debug(`Using model: ${this.model}`);
         }
     }
-    async create(ctx, prompt) {
+    async create(ctx, prompts) {
         try {
+            // TODO contents caching
             // Call the Gemini API
             const result = await this.model.generateContent({
                 contents: [
                     {
                         role: "user",
-                        parts: [{ text: prompt }]
+                        parts: prompts.map((prompt) => ({
+                            text: prompt.text
+                        }))
                     }
                 ],
                 generationConfig: {
@@ -39565,7 +39615,7 @@ class GeminiClient {
             // Retry logic
             if (this.options.retries > 0) {
                 this.options.retries--;
-                return this.create(ctx, prompt);
+                return this.create(ctx, prompts);
             }
             return "Failed to review this file due to an API error.";
         }
@@ -45036,14 +45086,17 @@ class OpenAIClient {
             coreExports.debug(`Using model: ${options.model}`);
         }
     }
-    async create(ctx, prompt) {
+    async create(ctx, prompts) {
         try {
             // Call the OpenAI API
             const response = await this.client.chat.completions.create({
                 model: getModelName(this.options.model),
                 messages: [
                     { role: "system", content: this.options.systemPrompt },
-                    { role: "user", content: prompt }
+                    ...prompts.map((prompt) => ({
+                        role: prompt.role,
+                        content: prompt.text
+                    }))
                 ],
                 temperature: 0.1
                 // max_tokens: 2000,
@@ -45055,7 +45108,7 @@ class OpenAIClient {
             // Retry logic
             if (this.options.retries > 0) {
                 this.options.retries--;
-                return this.create(ctx, prompt);
+                return this.create(ctx, prompts);
             }
             return "Failed to review this file due to an API error.";
         }
@@ -45145,14 +45198,14 @@ class Reviewer {
             const prompt = prompts.renderSummarizeFileDiff(prContext, change);
             // Generate summary for this specific file change using the chatbot
             const summary = await this.summaryBot.create(prContext, prompt);
-            // set the summary in the change object
+            // Set the summary in the change object
             change.summary = summary;
             // Log the summary for debugging purposes
             coreExports.debug(`Summary: ${change.filename} \n ${summary}\n`);
-            // Store the summary in the PR context for later compilation
+            // Store the summary in the PR context for later use
             prContext.appendChangeSummary(change.filename, summary);
         }
-        // Get the compiled summary of all file changes
+        // Retrieve the compiled summary of all file changes
         const message = prContext.getChangeSummary();
         // Generate a comprehensive release note based on all file summaries
         const prompt = prompts.renderSummarizeReleaseNote(message);
