@@ -41,11 +41,19 @@ export declare class Prompts {
     /**
      * Renders a template string by replacing placeholders with provided values.
      * @param template - Template string containing placeholders in the format $key or ${key}
+     *                  and conditional blocks in the format $if(condition){trueContent}$else{falseContent}
      * @param values - Object containing key-value pairs for placeholder replacement
      * @param addFooter - Whether to append the footer to the template (defaults to false)
      * @returns Formatted string with all placeholders replaced and footer appended if requested
      */
     renderTemplate(template: string, values: Record<string, string>, addFooter?: boolean): string;
+    /**
+     * Evaluates a condition string against provided values
+     * @param condition - Condition string like "key == 'value'" or "key"
+     * @param values - Values to be used in evaluation
+     * @returns Boolean result of condition evaluation
+     */
+    private evaluateCondition;
     /**
      * Outputs debug information about the current options.
      * Uses the debug function from @actions/core.

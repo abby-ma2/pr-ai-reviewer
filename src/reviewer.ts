@@ -95,6 +95,7 @@ export class Reviewer {
     const message = prContext.getChangeSummary()
     // Generate a comprehensive release note based on all file summaries
     const prompt = prompts.renderSummarizeReleaseNote(message)
+    debug(`Release note prompt: ${prompt}`)
     return await this.summaryBot.create(prContext, prompt)
   }
 

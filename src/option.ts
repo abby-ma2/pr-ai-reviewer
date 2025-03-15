@@ -54,7 +54,7 @@ export class Options {
     info(`debug: ${this.debug}`)
     info(`disable_review: ${this.disableReview}`)
     info(`disable_release_notes: ${this.disableReleaseNotes}`)
-    info(`path_filters: ${this.pathFilters.toString()}`)
+    info(`path_filters: ${this.pathFilters?.toString()}`)
     info(`system_prompt: ${this.systemPrompt}`)
     info(`summary_model: ${this.summaryModel}`)
     info(`model: ${this.model}`)

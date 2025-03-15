@@ -2,10 +2,11 @@ import {
   getBooleanInput,
   getInput,
   getMultilineInput,
-  info,
-  setFailed
+  setFailed,
+  warning
 } from "@actions/core"
 import { context, getOctokit } from "@actions/github"
+import debug from "debug"
 import { Commenter } from "./commenter.js"
 import { PullRequestContext } from "./context.js"
 import { Options } from "./option.js"
@@ -92,7 +93,7 @@ const getFileContent = async (
     }
     return undefined
   } catch (error) {
-    info(`Failed to fetch content for ${path} ${error}`)
+    warning(`Failed to fetch content for ${path} ${error}`)
     return undefined
   }
 }
@@ -148,7 +149,7 @@ const getChangedFiles = async (
       url: file.blob_url,
       patch: file.patch,
       summary: "",
-      content: undefined,
+      content: "",
       diff: []
     }
 
@@ -238,6 +239,7 @@ export async function run(): Promise<void> {
         changes
       })
 
+      debug(`Summary changeset: ${summary}`)
       // Update the PR description with the generated summary
       await commenter.updateDescription(summary)
     }
