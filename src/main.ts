@@ -5,6 +5,7 @@ import {
   setFailed
 } from "@actions/core"
 import { context, getOctokit } from "@actions/github"
+import debug from "debug"
 import { Commenter } from "./commenter.js"
 import { PullRequestContext } from "./context.js"
 import { Options } from "./option.js"
@@ -60,6 +61,42 @@ const getPrContext = (): PullRequestContext => {
 }
 
 /**
+ * Fetches the content of a file from GitHub repository.
+ *
+ * @param octokit - GitHub API client instance
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @param path - File path
+ * @param ref - Git reference (branch, tag, or commit SHA)
+ * @returns The content of the file as a string or undefined if not found
+ */
+const getFileContent = async (
+  octokit: ReturnType<typeof getOctokit>,
+  owner: string,
+  repo: string,
+  path: string,
+  ref: string
+): Promise<string | undefined> => {
+  try {
+    const response = await octokit.rest.repos.getContent({
+      owner,
+      repo,
+      path,
+      ref
+    })
+
+    if ("content" in response.data && response.data.content) {
+      // Content is base64 encoded
+      return Buffer.from(response.data.content, "base64").toString()
+    }
+    return undefined
+  } catch (error) {
+    console.error(`Failed to fetch content for ${path}:`, error)
+    return undefined
+  }
+}
+
+/**
  * Fetches and processes the changed files in a pull request.
  * Retrieves the diff between base and head commits, parses the patch information,
  * and constructs FileDiff objects for each changed section of code.
@@ -112,6 +149,20 @@ const getChangedFiles = async (
       summary: "",
       content: undefined,
       diff: []
+    }
+
+    // Fetch file content from the head commit
+    if (pull_request?.head?.sha) {
+      changeFile.content = await getFileContent(
+        octokit,
+        repo.owner,
+        repo.repo,
+        file.filename,
+        pull_request.head.sha
+      )
+      debug(
+        `Fetched content for ${file.filename} from commit ${pull_request.head.sha}\n ${changeFile.content}\n`
+      )
     }
 
     const results = parsePatch({
