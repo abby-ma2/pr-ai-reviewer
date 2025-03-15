@@ -15,7 +15,7 @@ export class Options {
   summarizeReleaseNotes: string
   releaseNotesTitle: string
   useFileContent: boolean
-  
+
   constructor(
     debug: boolean,
     disableReview: boolean,

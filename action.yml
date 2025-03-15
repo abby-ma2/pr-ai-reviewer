@@ -198,7 +198,9 @@ inputs:
       and emphasize features visible to the end-user while omitting code-level details.
   use_file_content:
     required: false
-    description: If true, it will also provide the file content as context when review or summary.
+    description:
+      If true, it will also provide the file content as context when review or
+      summary.
     default: "true"
   language:
     required: false
