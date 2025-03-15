@@ -6,6 +6,7 @@ import {
   warning
 } from "@actions/core"
 import { context, getOctokit } from "@actions/github"
+import debug from "debug"
 import { Commenter } from "./commenter.js"
 import { PullRequestContext } from "./context.js"
 import { Options } from "./option.js"
@@ -238,6 +239,7 @@ export async function run(): Promise<void> {
         changes
       })
 
+      debug(`Summary changeset: ${summary}`)
       // Update the PR description with the generated summary
       await commenter.updateDescription(summary)
     }
