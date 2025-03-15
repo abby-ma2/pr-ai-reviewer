@@ -33109,7 +33109,9 @@ class PullRequestContext {
     repo;
     /** Pull request number */
     pullRequestNumber;
+    /** Comment ID for the PR review comment */
     commentId;
+    /** Array of file summaries in markdown format */
     fileSummaries;
     /**
      * Creates an instance of PullRequestContext
@@ -33117,8 +33119,9 @@ class PullRequestContext {
      * @param owner Repository owner name
      * @param title Pull request title
      * @param repo Repository name
-     * @param description Pull request description (optional)
-     * @param pullRequestNumber Pull request number (optional)
+     * @param description Pull request description
+     * @param pullRequestNumber Pull request number
+     * @param commentId ID of the comment associated with this PR review
      */
     constructor(owner, title, repo, description, pullRequestNumber, commentId) {
         this.owner = owner;
@@ -33130,9 +33133,20 @@ class PullRequestContext {
         this.summary = "";
         this.fileSummaries = [];
     }
+    /**
+     * Appends a file change summary to the fileSummaries array
+     *
+     * @param file File name or path
+     * @param summary Summary of changes for the file
+     */
     appendChangeSummary(file, summary) {
         this.fileSummaries.push(`### ${file}\n\n${summary}`);
     }
+    /**
+     * Returns a combined string of all file summaries
+     *
+     * @returns Markdown formatted string of all file summaries
+     */
     getChangeSummary() {
         return `${this.fileSummaries.join("\n")}`;
     }

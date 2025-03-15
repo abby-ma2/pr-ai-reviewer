@@ -15,7 +15,9 @@ export declare class PullRequestContext {
     repo: string;
     /** Pull request number */
     pullRequestNumber: number;
+    /** Comment ID for the PR review comment */
     commentId: string;
+    /** Array of file summaries in markdown format */
     fileSummaries: string[];
     /**
      * Creates an instance of PullRequestContext
@@ -23,10 +25,22 @@ export declare class PullRequestContext {
      * @param owner Repository owner name
      * @param title Pull request title
      * @param repo Repository name
-     * @param description Pull request description (optional)
-     * @param pullRequestNumber Pull request number (optional)
+     * @param description Pull request description
+     * @param pullRequestNumber Pull request number
+     * @param commentId ID of the comment associated with this PR review
      */
     constructor(owner: string, title: string, repo: string, description: string, pullRequestNumber: number, commentId: string);
+    /**
+     * Appends a file change summary to the fileSummaries array
+     *
+     * @param file File name or path
+     * @param summary Summary of changes for the file
+     */
     appendChangeSummary(file: string, summary: string): void;
+    /**
+     * Returns a combined string of all file summaries
+     *
+     * @returns Markdown formatted string of all file summaries
+     */
     getChangeSummary(): string;
 }
