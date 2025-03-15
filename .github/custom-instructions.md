@@ -7,7 +7,7 @@ will create a GitHub Action that uses an LLM to perform code reviews. Please
 develop the application while confirming necessary specifications. We will
 communicate in Japanese. Please write comments in the code in English.
 
-# List the following technology stack
+## List the following technology stack
 
 - TypeScript
 - GitHub Actions
@@ -17,7 +17,7 @@ maintainability. Prioritize the use of simple data types to ensure clarity and
 efficiency. Decompose complex functions into smaller, more manageable functions
 to improve readability and facilitate debugging.
 
-# LLMs to Use
+## LLMs to Use
 
 - OpenAI
 - Anthropic
@@ -25,7 +25,7 @@ to improve readability and facilitate debugging.
 
 You can switch the LLM and model to be used in the settings.
 
-# Functionality
+## Functionality
 
 The GitHub Actions to be created will have the following functionalities:
 
