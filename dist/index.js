@@ -45400,7 +45400,9 @@ const getChangedFiles = async (options, octokit) => {
         // Fetch file content from the head commit
         if (pull_request?.head?.sha) {
             changeFile.content = await getFileContent(octokit, repo.owner, repo.repo, file.filename, pull_request.head.sha);
-            coreExports.debug(`Fetched content for ${file.filename} from commit ${pull_request.head.sha}\n ${changeFile.content}\n`);
+            //debug(
+            //  `Fetched content for ${file.filename} from commit ${pull_request.head.sha}\n ${changeFile.content}\n`
+            //)
         }
         const results = parsePatch({
             filename: file.filename,
