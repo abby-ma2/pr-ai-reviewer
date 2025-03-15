@@ -300,7 +300,8 @@ export class Prompts {
    * Renders a template string by replacing placeholders with provided values.
    * @param template - Template string containing placeholders in the format $key or ${key}
    * @param values - Object containing key-value pairs for placeholder replacement
-   * @returns Formatted string with all placeholders replaced and footer appended
+   * @param addFooter - Whether to append the footer to the template (defaults to false)
+   * @returns Formatted string with all placeholders replaced and footer appended if requested
    */
   renderTemplate(
     template: string,

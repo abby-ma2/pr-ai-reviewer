@@ -34545,7 +34545,8 @@ class Prompts {
      * Renders a template string by replacing placeholders with provided values.
      * @param template - Template string containing placeholders in the format $key or ${key}
      * @param values - Object containing key-value pairs for placeholder replacement
-     * @returns Formatted string with all placeholders replaced and footer appended
+     * @param addFooter - Whether to append the footer to the template (defaults to false)
+     * @returns Formatted string with all placeholders replaced and footer appended if requested
      */
     renderTemplate(template, values, addFooter = false) {
         values.language = this.options.language || "en-US";
@@ -45197,14 +45198,14 @@ class Reviewer {
             const prompt = prompts.renderSummarizeFileDiff(prContext, change);
             // Generate summary for this specific file change using the chatbot
             const summary = await this.summaryBot.create(prContext, prompt);
-            // set the summary in the change object
+            // Set the summary in the change object
             change.summary = summary;
             // Log the summary for debugging purposes
             coreExports.debug(`Summary: ${change.filename} \n ${summary}\n`);
-            // Store the summary in the PR context for later compilation
+            // Store the summary in the PR context for later use
             prContext.appendChangeSummary(change.filename, summary);
         }
-        // Get the compiled summary of all file changes
+        // Retrieve the compiled summary of all file changes
         const message = prContext.getChangeSummary();
         // Generate a comprehensive release note based on all file summaries
         const prompt = prompts.renderSummarizeReleaseNote(message);

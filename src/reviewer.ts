@@ -83,15 +83,15 @@ export class Reviewer {
       // Generate summary for this specific file change using the chatbot
       const summary = await this.summaryBot.create(prContext, prompt)
 
-      // set the summary in the change object
+      // Set the summary in the change object
       change.summary = summary
       // Log the summary for debugging purposes
       debug(`Summary: ${change.filename} \n ${summary}\n`)
-      // Store the summary in the PR context for later compilation
+      // Store the summary in the PR context for later use
       prContext.appendChangeSummary(change.filename, summary)
     }
 
-    // Get the compiled summary of all file changes
+    // Retrieve the compiled summary of all file changes
     const message = prContext.getChangeSummary()
     // Generate a comprehensive release note based on all file summaries
     const prompt = prompts.renderSummarizeReleaseNote(message)
