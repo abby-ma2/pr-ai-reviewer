@@ -1,5 +1,4 @@
 import {
-  debug,
   getBooleanInput,
   getInput,
   getMultilineInput,
@@ -162,9 +161,9 @@ const getChangedFiles = async (
         file.filename,
         pull_request.head.sha
       )
-      debug(
-        `Fetched content for ${file.filename} from commit ${pull_request.head.sha}\n ${changeFile.content}\n`
-      )
+      //debug(
+      //  `Fetched content for ${file.filename} from commit ${pull_request.head.sha}\n ${changeFile.content}\n`
+      //)
     }
 
     const results = parsePatch({
