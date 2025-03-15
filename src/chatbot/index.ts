@@ -11,7 +11,7 @@ import { OpenAIClient } from "./openai.js"
  */
 export type Message = {
   text: string
-  role: "user" | "assistant" | "system"
+  role: string
   // if true, prompt will be cached. default is false
   cache?: boolean
 }
@@ -20,7 +20,7 @@ export type Message = {
  * Interface for chatbot clients that can review code
  */
 export interface ChatBot {
-  create(ctx: PullRequestContext, prompt: string): Promise<string>
+  create(ctx: PullRequestContext, prompts: Message[]): Promise<string>
 }
 
 /**

@@ -2,7 +2,7 @@ import { debug, warning } from "@actions/core"
 import { type GenerativeModel, GoogleGenerativeAI } from "@google/generative-ai"
 import type { PullRequestContext } from "../context.js"
 import type { Options } from "../option.js"
-import { type ChatBot, getModelName } from "./index.js"
+import { type ChatBot, type Message, getModelName } from "./index.js"
 
 const defaultModel = "gemini-2.0-flash-lite"
 const apiKey = process.env.GEMINI_API_KEY || ""
@@ -28,14 +28,17 @@ export class GeminiClient implements ChatBot {
     }
   }
 
-  async create(ctx: PullRequestContext, prompt: string): Promise<string> {
+  async create(ctx: PullRequestContext, prompts: Message[]): Promise<string> {
     try {
+      // TODO contents caching
       // Call the Gemini API
       const result = await this.model.generateContent({
         contents: [
           {
             role: "user",
-            parts: [{ text: prompt }]
+            parts: prompts.map((prompt) => ({
+              text: prompt.text
+            }))
           }
         ],
         generationConfig: {
@@ -53,7 +56,7 @@ export class GeminiClient implements ChatBot {
       // Retry logic
       if (this.options.retries > 0) {
         this.options.retries--
-        return this.create(ctx, prompt)
+        return this.create(ctx, prompts)
       }
 
       return "Failed to review this file due to an API error."

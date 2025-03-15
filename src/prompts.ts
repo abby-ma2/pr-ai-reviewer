@@ -1,4 +1,5 @@
 import { debug } from "@actions/core"
+import type { Message } from "./chatbot/index.js"
 import type { PullRequestContext } from "./context.js"
 import type { Options } from "./option.js"
 import type { ChangeFile, FileDiff } from "./types.js"
@@ -38,7 +39,7 @@ Limit the response to 50–100 words. Clearly highlight changes that affect end 
  * Contains placeholders for title, description, summary, filename, and patches.
  * Provides instructions for the AI reviewer on how to format responses.
  */
-const reviewFileDiff = `
+const reviewFileDiffPrefix = `
 ## GitHub PR Title
 
 \`$title\`
@@ -135,12 +136,15 @@ There's a syntax error in the add function.
 LGTM!
 ---
 
+`
+
+const reviewFileDiff = `
 ## Changes made to \`$filename\` for your review
 
 $patches
 `
 
-const summarizeFileDiff = `
+const summarizeFileDiffPrefix = `
 ## GitHub PR Title
 
 \`$title\`
@@ -168,6 +172,9 @@ Analyze the provided patch format file diff and summarize it according to the fo
 * [Summary 4]
 * [Summary 5]
 
+`
+
+const summarizeFileDiff = `
 ## Diff
 
 $filename
@@ -202,15 +209,23 @@ export class Prompts {
    * @param message - The change summary to include in the release note prompt
    * @returns Formatted release note prompt string with the change summary inserted
    */
-  renderSummarizeReleaseNote(message: string): string {
+  renderSummarizeReleaseNote(message: string): Message[] {
+    const prompts: Message[] = []
     const data = {
       changeSummary: message
     }
 
-    return this.renderTemplate(
-      this.summarizePrefix + this.summarizeReleaseNote,
-      data
-    )
+    prompts.push({
+      role: "user",
+      text: this.renderTemplate(
+        this.summarizePrefix + this.summarizeReleaseNote,
+        data,
+        true
+      ),
+      cache: true
+    })
+
+    return prompts
   }
 
   /**
@@ -219,7 +234,12 @@ export class Prompts {
    * @param change - File change information with patch content
    * @returns Formatted summary prompt string with all placeholders replaced
    */
-  renderSummarizeFileDiff(ctx: PullRequestContext, change: ChangeFile): string {
+  renderSummarizeFileDiff(
+    ctx: PullRequestContext,
+    change: ChangeFile
+  ): Message[] {
+    const prompts: Message[] = []
+
     const data = {
       title: ctx.title,
       description: ctx.description || "",
@@ -227,7 +247,19 @@ export class Prompts {
       patch: change.patch
     }
 
-    return this.renderTemplate(summarizeFileDiff, data)
+    // cache the first prompt
+    prompts.push({
+      role: "user",
+      text: this.renderTemplate(summarizeFileDiffPrefix, data),
+      cache: true
+    })
+
+    // diff
+    prompts.push({
+      role: "user",
+      text: this.renderTemplate(summarizeFileDiff, data, true)
+    })
+    return prompts
   }
 
   /**
@@ -240,7 +272,8 @@ export class Prompts {
     ctx: PullRequestContext,
     summary: string,
     diff: FileDiff
-  ): string {
+  ): Message[] {
+    const prompts: Message[] = []
     const data = {
       title: ctx.title,
       description: ctx.description || "",
@@ -249,7 +282,18 @@ export class Prompts {
       patches: renderFileDiffHunk(diff)
     }
 
-    return this.renderTemplate(reviewFileDiff, data)
+    // cache the first prompt
+    prompts.push({
+      role: "user",
+      text: this.renderTemplate(reviewFileDiffPrefix, data),
+      cache: true
+    })
+    // diff
+    prompts.push({
+      role: "user",
+      text: this.renderTemplate(reviewFileDiff, data, true)
+    })
+    return prompts
   }
 
   /**
@@ -258,10 +302,14 @@ export class Prompts {
    * @param values - Object containing key-value pairs for placeholder replacement
    * @returns Formatted string with all placeholders replaced and footer appended
    */
-  renderTemplate(template: string, values: Record<string, string>): string {
-    values.language = this.options.language || "English"
+  renderTemplate(
+    template: string,
+    values: Record<string, string>,
+    addFooter = false
+  ): string {
+    values.language = this.options.language || "en-US"
     // add footer
-    let result = `${template}\n\n---\n\n${this.footer}\n`
+    let result = addFooter ? `${template}\n\n---\n${this.footer}` : template
 
     for (const [key, value] of Object.entries(values)) {
       const placeholder1 = `$${key}`
