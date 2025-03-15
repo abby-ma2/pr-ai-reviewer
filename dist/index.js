@@ -46488,7 +46488,7 @@ class Reviewer {
             for (const diff of change.diff) {
                 const reviewPrompt = prompts.renderReviewPrompt(prContext, change, diff);
                 // Debug the review prompt
-                // debug(`Prompt: ${reviewPrompt}\n`);
+                coreExports.debug(`Review Prompt: ${reviewPrompt}\n`);
                 const reviewComment = await this.reviewBot.create(prContext, reviewPrompt);
                 coreExports.debug(`Review comment: ${diff.filename}\n${reviewComment}`);
                 const reviews = parseReviewComment(reviewComment);

@@ -124,7 +124,7 @@ export class Reviewer {
         const reviewPrompt = prompts.renderReviewPrompt(prContext, change, diff)
 
         // Debug the review prompt
-        // debug(`Prompt: ${reviewPrompt}\n`);
+        debug(`Review Prompt: ${reviewPrompt}\n`)
 
         const reviewComment = await this.reviewBot.create(
           prContext,
