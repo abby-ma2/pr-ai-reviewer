@@ -35210,6 +35210,7 @@ class Options {
     summarizeReleaseNotes;
     releaseNotesTitle;
     useFileContent;
+    localAction;
     constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, summaryModel, model, retries, timeoutMS, language, summarizeReleaseNotes, releaseNotesTitle, useFileContent) {
         this.debug = debug;
         this.disableReview = disableReview;
@@ -35224,6 +35225,7 @@ class Options {
         this.summarizeReleaseNotes = summarizeReleaseNotes;
         this.releaseNotesTitle = releaseNotesTitle;
         this.useFileContent = useFileContent;
+        this.localAction = process.env.LOCAL_ACTION === "true";
     }
     /**
      * Prints all configuration options using core.info for debugging purposes.
@@ -46496,7 +46498,9 @@ class Reviewer {
                     if (review.isLGTM) {
                         continue;
                     }
-                    await this.commenter.createReviewComment(change.filename, review);
+                    if (!this.options.localAction) {
+                        await this.commenter.createReviewComment(change.filename, review);
+                    }
                 }
             }
         }
@@ -46711,8 +46715,10 @@ async function run() {
                 changes
             });
             debug$2(`Summary changeset: ${summary}`);
-            // Update the PR description with the generated summary
-            await commenter.updateDescription(summary);
+            if (!options.localAction) {
+                // Update the PR description with the generated summary
+                await commenter.updateDescription(summary);
+            }
         }
         if (options.disableReview) {
             return;
