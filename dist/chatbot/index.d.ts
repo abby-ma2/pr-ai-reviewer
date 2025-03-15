@@ -17,7 +17,7 @@ export interface ChatBot {
 /**
  * Extract the model name from a full model identifier string
  * @param name - Full model identifier in "provider/model" format
- * @returns The model portion of the identifier, or the original string if no provider prefix
+ * @returns The model portion of the identifier, or the original string if no provider prefix is found
  */
 export declare const getModelName: (name: string) => string;
 /**
@@ -25,6 +25,6 @@ export declare const getModelName: (name: string) => string;
  * @param modelName - Name of the model to use (prefixed with provider name)
  * @param options - Configuration options
  * @returns ChatBot implementation for the specified model
- * @throws Error if model is not supported
+ * @throws Error if the model is not supported
  */
 export declare const createChatBotFromModel: (modelName: string, options: Options) => ChatBot;
