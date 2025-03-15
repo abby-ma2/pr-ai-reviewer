@@ -14,6 +14,7 @@ export class Options {
   language: string
   summarizeReleaseNotes: string
   releaseNotesTitle: string
+  useFileContent: boolean
 
   constructor(
     debug: boolean,
@@ -27,7 +28,8 @@ export class Options {
     timeoutMS: string,
     language: string,
     summarizeReleaseNotes: string,
-    releaseNotesTitle: string
+    releaseNotesTitle: string,
+    useFileContent: boolean
   ) {
     this.debug = debug
     this.disableReview = disableReview
@@ -41,6 +43,7 @@ export class Options {
     this.language = language
     this.summarizeReleaseNotes = summarizeReleaseNotes
     this.releaseNotesTitle = releaseNotesTitle
+    this.useFileContent = useFileContent
   }
 
   /**

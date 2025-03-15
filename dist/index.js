@@ -34017,7 +34017,8 @@ class Options {
     language;
     summarizeReleaseNotes;
     releaseNotesTitle;
-    constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, summaryModel, model, retries, timeoutMS, language, summarizeReleaseNotes, releaseNotesTitle) {
+    useFileContent;
+    constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, summaryModel, model, retries, timeoutMS, language, summarizeReleaseNotes, releaseNotesTitle, useFileContent) {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
@@ -34030,6 +34031,7 @@ class Options {
         this.language = language;
         this.summarizeReleaseNotes = summarizeReleaseNotes;
         this.releaseNotesTitle = releaseNotesTitle;
+        this.useFileContent = useFileContent;
     }
     /**
      * Prints all configuration options using core.info for debugging purposes.
@@ -34321,6 +34323,12 @@ const reviewFileDiffPrefix = `
 $description
 \`\`\`
 
+## File Content Data (Ignore if no content data exists.)
+
+\`\`\`
+$content
+\`\`\`
+
 ## Summary of changes
 
 \`\`\`
@@ -34424,6 +34432,11 @@ const summarizeFileDiffPrefix = `
 $description
 \`\`\`
 
+## File Content Data (Ignore if no content data exists.)
+
+\`\`\`
+$content
+\`\`\`
 
 ## Instructions
 Analyze the provided patch format file diff and summarize it according to the following instructions:
@@ -34498,6 +34511,7 @@ class Prompts {
             title: ctx.title,
             description: ctx.description || "",
             filename: change.filename || "",
+            content: this.options.useFileContent ? change.content || "" : "",
             patch: change.patch
         };
         // cache the first prompt
@@ -34519,13 +34533,14 @@ class Prompts {
      * @param diff - File change information with diff content
      * @returns Formatted review prompt string with all placeholders replaced
      */
-    renderReviewPrompt(ctx, summary, diff) {
+    renderReviewPrompt(ctx, change, diff) {
         const prompts = [];
         const data = {
             title: ctx.title,
             description: ctx.description || "",
             filename: diff.filename || "",
-            changeSummary: summary,
+            changeSummary: change.summary,
+            content: this.options.useFileContent ? change.content || "" : "",
             patches: renderFileDiffHunk(diff)
         };
         // cache the first prompt
@@ -45225,7 +45240,7 @@ class Reviewer {
     async reviewChanges({ prContext, prompts, changes }) {
         for (const change of changes) {
             for (const diff of change.diff) {
-                const reviewPrompt = prompts.renderReviewPrompt(prContext, change.summary, diff);
+                const reviewPrompt = prompts.renderReviewPrompt(prContext, change, diff);
                 // Debug the review prompt
                 // debug(`Prompt: ${reviewPrompt}\n`);
                 const reviewComment = await this.reviewBot.create(prContext, reviewPrompt);
@@ -45293,7 +45308,7 @@ const parseReviewComment = (reviewComment) => {
  * @returns Configured Options instance with all action parameters
  */
 const getOptions = () => {
-    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("summary_model"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"), coreExports.getInput("release_notes_title"));
+    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("summary_model"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"), coreExports.getInput("release_notes_title"), coreExports.getBooleanInput("use_file_content"));
 };
 const token = process.env.GITHUB_TOKEN || "";
 /**

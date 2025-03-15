@@ -50,6 +50,12 @@ const reviewFileDiffPrefix = `
 $description
 \`\`\`
 
+## File Content Data (Ignore if no content data exists.)
+
+\`\`\`
+$content
+\`\`\`
+
 ## Summary of changes
 
 \`\`\`
@@ -155,6 +161,11 @@ const summarizeFileDiffPrefix = `
 $description
 \`\`\`
 
+## File Content Data (Ignore if no content data exists.)
+
+\`\`\`
+$content
+\`\`\`
 
 ## Instructions
 Analyze the provided patch format file diff and summarize it according to the following instructions:
@@ -244,6 +255,7 @@ export class Prompts {
       title: ctx.title,
       description: ctx.description || "",
       filename: change.filename || "",
+      content: this.options.useFileContent ? change.content || "" : "",
       patch: change.patch
     }
 
@@ -270,7 +282,7 @@ export class Prompts {
    */
   renderReviewPrompt(
     ctx: PullRequestContext,
-    summary: string,
+    change: ChangeFile,
     diff: FileDiff
   ): Message[] {
     const prompts: Message[] = []
@@ -278,7 +290,8 @@ export class Prompts {
       title: ctx.title,
       description: ctx.description || "",
       filename: diff.filename || "",
-      changeSummary: summary,
+      changeSummary: change.summary,
+      content: this.options.useFileContent ? change.content || "" : "",
       patches: renderFileDiffHunk(diff)
     }
 

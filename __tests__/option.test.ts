@@ -23,7 +23,8 @@ describe("Options", () => {
         "60000",
         "ja",
         "Please summarize the changes",
-        "Release Notes Title"
+        "Release Notes Title",
+        true
       )
 
       expect(options.debug).toBe(true)
@@ -58,7 +59,8 @@ describe("Options", () => {
         "0",
         "",
         "",
-        ""
+        "",
+        true
       )
 
       expect(options.checkPath("src/main.ts")).toBe(true)
