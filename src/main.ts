@@ -1,11 +1,12 @@
 import {
+  debug,
   getBooleanInput,
   getInput,
   getMultilineInput,
+  info,
   setFailed
 } from "@actions/core"
 import { context, getOctokit } from "@actions/github"
-import debug from "debug"
 import { Commenter } from "./commenter.js"
 import { PullRequestContext } from "./context.js"
 import { Options } from "./option.js"
@@ -91,7 +92,7 @@ const getFileContent = async (
     }
     return undefined
   } catch (error) {
-    console.error(`Failed to fetch content for ${path}:`, error)
+    info(`Failed to fetch content for ${path} ${error}`)
     return undefined
   }
 }
