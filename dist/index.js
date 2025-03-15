@@ -45401,7 +45401,7 @@ const getFileContent = async (octokit, owner, repo, path, ref) => {
         return undefined;
     }
     catch (error) {
-        coreExports.info(`Failed to fetch content for ${path} ${error}`);
+        coreExports.warning(`Failed to fetch content for ${path} ${error}`);
         return undefined;
     }
 };
@@ -45447,7 +45447,7 @@ const getChangedFiles = async (options, octokit) => {
             url: file.blob_url,
             patch: file.patch,
             summary: "",
-            content: undefined,
+            content: "",
             diff: []
         };
         // Fetch file content from the head commit

@@ -2,8 +2,8 @@ import {
   getBooleanInput,
   getInput,
   getMultilineInput,
-  info,
-  setFailed
+  setFailed,
+  warning
 } from "@actions/core"
 import { context, getOctokit } from "@actions/github"
 import { Commenter } from "./commenter.js"
@@ -92,7 +92,7 @@ const getFileContent = async (
     }
     return undefined
   } catch (error) {
-    info(`Failed to fetch content for ${path} ${error}`)
+    warning(`Failed to fetch content for ${path} ${error}`)
     return undefined
   }
 }
@@ -148,7 +148,7 @@ const getChangedFiles = async (
       url: file.blob_url,
       patch: file.patch,
       summary: "",
-      content: undefined,
+      content: "",
       diff: []
     }
 
