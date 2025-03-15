@@ -1,26 +1,26 @@
-import type { GitHub } from "@actions/github/lib/utils.js";
-import type { PullRequestContext } from "./context.js";
-import type { Options } from "./option.js";
-import type { ReviewComment } from "./reviewer.js";
+import type { GitHub } from "@actions/github/lib/utils.js"
+import type { PullRequestContext } from "./context.js"
+import type { Options } from "./option.js"
+import type { ReviewComment } from "./reviewer.js"
 
 export const DESCRIPTION_START_TAG =
-  "<!-- This is an auto-generated comment: release notes -->";
+  "<!-- This is an auto-generated comment: release notes -->"
 export const DESCRIPTION_END_TAG =
-  "<!-- end of auto-generated comment: release notes -->";
+  "<!-- end of auto-generated comment: release notes -->"
 
 export class Commenter {
-  private options: Options;
-  private octokit: InstanceType<typeof GitHub>;
-  private prContext: PullRequestContext;
+  private options: Options
+  private octokit: InstanceType<typeof GitHub>
+  private prContext: PullRequestContext
 
   constructor(
     options: Options,
     octokit: InstanceType<typeof GitHub>,
-    prContext: PullRequestContext,
+    prContext: PullRequestContext
   ) {
-    this.options = options;
-    this.octokit = octokit;
-    this.prContext = prContext;
+    this.options = options
+    this.octokit = octokit
+    this.prContext = prContext
   }
 
   /**
@@ -31,31 +31,31 @@ export class Commenter {
    * @returns A Promise that resolves when the description is updated
    */
   async updateDescription(message: string) {
-    const { owner, repo, pullRequestNumber } = this.prContext;
+    const { owner, repo, pullRequestNumber } = this.prContext
     const pr = await this.octokit.rest.pulls.get({
       owner: owner,
       repo: repo,
-      pull_number: pullRequestNumber,
-    });
+      pull_number: pullRequestNumber
+    })
     // Get the current description of the pull request
-    const body = pr.data.body || "";
-    const description = this.getDescription(body);
+    const body = pr.data.body || ""
+    const description = this.getDescription(body)
     const cleaned = this.removeContentWithinTags(
       message,
       DESCRIPTION_START_TAG,
-      DESCRIPTION_END_TAG,
-    );
+      DESCRIPTION_END_TAG
+    )
 
     // Append the new content to the existing description
-    const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n### ${this.options.releaseNotesTitle}:\n${cleaned}\n${DESCRIPTION_END_TAG}`;
+    const newDescription = `${description}\n${DESCRIPTION_START_TAG}\n### ${this.options.releaseNotesTitle}:\n${cleaned}\n${DESCRIPTION_END_TAG}`
 
     // Update the pull request description
     await this.octokit.rest.pulls.update({
       owner,
       repo,
       pull_number: pullRequestNumber,
-      body: newDescription,
-    });
+      body: newDescription
+    })
   }
 
   /**
@@ -73,8 +73,8 @@ export class Commenter {
       pull_number: this.prContext.pullRequestNumber,
       commit_id: this.prContext.commentId,
       path: filename,
-      body: review.comment,
-    };
+      body: review.comment
+    }
 
     // Set line parameters appropriately
     const requestParams =
@@ -83,11 +83,11 @@ export class Commenter {
         : {
             ...baseRequest,
             start_line: review.startLine,
-            line: review.endLine,
-          };
+            line: review.endLine
+          }
 
     const reviewCommentResult =
-      await this.octokit.rest.pulls.createReviewComment(requestParams);
+      await this.octokit.rest.pulls.createReviewComment(requestParams)
     if (reviewCommentResult.status === 201) {
       // debug(`Comment created: ${reviewCommentResult.data.html_url}`);
     }
@@ -104,8 +104,8 @@ export class Commenter {
     return this.removeContentWithinTags(
       description,
       DESCRIPTION_START_TAG,
-      DESCRIPTION_END_TAG,
-    );
+      DESCRIPTION_END_TAG
+    )
   }
 
   /**
@@ -117,11 +117,11 @@ export class Commenter {
    * @returns The content string with the tagged section removed
    */
   removeContentWithinTags(content: string, startTag: string, endTag: string) {
-    const start = content.indexOf(startTag);
-    const end = content.lastIndexOf(endTag);
+    const start = content.indexOf(startTag)
+    const end = content.lastIndexOf(endTag)
     if (start >= 0 && end >= 0) {
-      return content.slice(0, start) + content.slice(end + endTag.length);
+      return content.slice(0, start) + content.slice(end + endTag.length)
     }
-    return content;
+    return content
   }
 }

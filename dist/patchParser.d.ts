@@ -10,7 +10,7 @@ export type DiffResult = {
     from: Hunk;
     to: Hunk;
 };
-export declare const parsePatch: ({ filename, patch, }: {
+export declare const parsePatch: ({ filename, patch }: {
     filename: string;
     patch?: string;
 }) => DiffResult[];

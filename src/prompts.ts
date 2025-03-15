@@ -1,12 +1,12 @@
-import { debug } from "@actions/core";
-import type { PullRequestContext } from "./context.js";
-import type { Options } from "./option.js";
-import type { ChangeFile, FileDiff } from "./types.js";
+import { debug } from "@actions/core"
+import type { PullRequestContext } from "./context.js"
+import type { Options } from "./option.js"
+import type { ChangeFile, FileDiff } from "./types.js"
 
 const defaultFooter = `
 ## IMPORTANT:
 We will communicate in $language.
-`;
+`
 
 const defalutSummarizePrefix = `Here is the summary of changes you have generated for files:
 
@@ -14,7 +14,7 @@ const defalutSummarizePrefix = `Here is the summary of changes you have generate
 $changeSummary
 \`\`\`
 
-`;
+`
 
 const summarizeReleaseNote = `
 Generate concise and structured release notes for a Pull Request.  
@@ -31,7 +31,7 @@ Example:
 - Bug Fix: Fixed an error occurring during login  
 
 Limit the response to 50–100 words. Clearly highlight changes that affect end users, and exclude code-level details or technical explanations. 
-`;
+`
 
 /**
  * Template for the pull request review prompt.
@@ -138,7 +138,7 @@ LGTM!
 ## Changes made to \`$filename\` for your review
 
 $patches
-`;
+`
 
 const summarizeFileDiff = `
 ## GitHub PR Title
@@ -174,17 +174,17 @@ $filename
 
 $patch
 
-`;
+`
 
 /**
  * Class responsible for generating and managing prompts used for PR reviews.
  * Handles the templating of review prompts with contextual information.
  */
 export class Prompts {
-  private options: Options;
-  private summarizePrefix: string = defalutSummarizePrefix;
-  private summarizeReleaseNote: string;
-  private footer: string = defaultFooter;
+  private options: Options
+  private summarizePrefix: string = defalutSummarizePrefix
+  private summarizeReleaseNote: string
+  private footer: string = defaultFooter
 
   /**
    * Creates a new Prompts instance with the specified options and template settings.
@@ -193,8 +193,8 @@ export class Prompts {
    * @param summarizePrefix - Custom prefix for summary prompts (defaults to a predefined prefix)
    */
   constructor(options: Options) {
-    this.options = options;
-    this.summarizeReleaseNote = summarizeReleaseNote;
+    this.options = options
+    this.summarizeReleaseNote = summarizeReleaseNote
   }
 
   /**
@@ -204,13 +204,13 @@ export class Prompts {
    */
   renderSummarizeReleaseNote(message: string): string {
     const data = {
-      changeSummary: message,
-    };
+      changeSummary: message
+    }
 
     return this.renderTemplate(
       this.summarizePrefix + this.summarizeReleaseNote,
-      data,
-    );
+      data
+    )
   }
 
   /**
@@ -224,10 +224,10 @@ export class Prompts {
       title: ctx.title,
       description: ctx.description || "",
       filename: change.filename || "",
-      patch: change.patch,
-    };
+      patch: change.patch
+    }
 
-    return this.renderTemplate(summarizeFileDiff, data);
+    return this.renderTemplate(summarizeFileDiff, data)
   }
 
   /**
@@ -239,17 +239,17 @@ export class Prompts {
   renderReviewPrompt(
     ctx: PullRequestContext,
     summary: string,
-    diff: FileDiff,
+    diff: FileDiff
   ): string {
     const data = {
       title: ctx.title,
       description: ctx.description || "",
       filename: diff.filename || "",
       changeSummary: summary,
-      patches: renderFileDiffHunk(diff),
-    };
+      patches: renderFileDiffHunk(diff)
+    }
 
-    return this.renderTemplate(reviewFileDiff, data);
+    return this.renderTemplate(reviewFileDiff, data)
   }
 
   /**
@@ -259,18 +259,18 @@ export class Prompts {
    * @returns Formatted string with all placeholders replaced and footer appended
    */
   renderTemplate(template: string, values: Record<string, string>): string {
-    values.language = this.options.language || "English";
+    values.language = this.options.language || "English"
     // add footer
-    let result = `${template}\n\n---\n\n${this.footer}\n`;
+    let result = `${template}\n\n---\n\n${this.footer}\n`
 
     for (const [key, value] of Object.entries(values)) {
-      const placeholder1 = `$${key}`;
-      const placeholder2 = `\${${key}}`;
-      result = result.split(placeholder1).join(value);
-      result = result.split(placeholder2).join(value);
+      const placeholder1 = `$${key}`
+      const placeholder2 = `\${${key}}`
+      result = result.split(placeholder1).join(value)
+      result = result.split(placeholder2).join(value)
     }
 
-    return result;
+    return result
   }
 
   /**
@@ -278,13 +278,13 @@ export class Prompts {
    * Uses the debug function from @actions/core.
    */
   debug(): void {
-    debug(`Options: ${JSON.stringify(this.options)}`);
+    debug(`Options: ${JSON.stringify(this.options)}`)
   }
 }
 
 export const renderFileDiffHunk = (diff: FileDiff): string => {
-  const fromContent = diff.from.content.join("\n");
-  const toContent = diff.to.content.join("\n");
+  const fromContent = diff.from.content.join("\n")
+  const toContent = diff.to.content.join("\n")
 
-  return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``;
-};
+  return `---new_hunk---\n\`\`\`\n${toContent}\n\`\`\`\n\n---old_hunk---\n\`\`\`\n${fromContent}\n\`\`\``
+}

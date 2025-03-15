@@ -4,21 +4,21 @@
  */
 export class PullRequestContext {
   /** Repository owner name */
-  public owner: string;
+  public owner: string
   /** Pull request title */
-  public title: string;
+  public title: string
   /** Pull request description (optional) */
-  public description: string;
+  public description: string
   /** Summary of the pull request (optional) */
-  public summary: string;
+  public summary: string
   /** Repository name */
-  public repo: string;
+  public repo: string
   /** Pull request number */
-  public pullRequestNumber: number;
+  public pullRequestNumber: number
 
-  public commentId: string;
+  public commentId: string
 
-  public fileSummaries: string[];
+  public fileSummaries: string[]
 
   /**
    * Creates an instance of PullRequestContext
@@ -35,23 +35,23 @@ export class PullRequestContext {
     repo: string,
     description: string,
     pullRequestNumber: number,
-    commentId: string,
+    commentId: string
   ) {
-    this.owner = owner;
-    this.title = title;
-    this.repo = repo;
-    this.description = description;
-    this.pullRequestNumber = pullRequestNumber;
-    this.commentId = commentId;
-    this.summary = "";
-    this.fileSummaries = [];
+    this.owner = owner
+    this.title = title
+    this.repo = repo
+    this.description = description
+    this.pullRequestNumber = pullRequestNumber
+    this.commentId = commentId
+    this.summary = ""
+    this.fileSummaries = []
   }
 
   appendChangeSummary(file: string, summary: string) {
-    this.fileSummaries.push(`### ${file}\n\n${summary}`);
+    this.fileSummaries.push(`### ${file}\n\n${summary}`)
   }
 
   getChangeSummary(): string {
-    return `${this.fileSummaries.join("\n")}`;
+    return `${this.fileSummaries.join("\n")}`
   }
 }

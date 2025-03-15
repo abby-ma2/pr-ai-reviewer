@@ -50,7 +50,7 @@ export declare class Reviewer {
      * @param changes - List of files changed in the pull request
      * @returns A promise that resolves to a string containing the generated release note summary
      */
-    summarizeChanges({ prContext, prompts, changes, }: {
+    summarizeChanges({ prContext, prompts, changes }: {
         prContext: PullRequestContext;
         prompts: Prompts;
         changes: ChangeFile[];
@@ -66,7 +66,7 @@ export declare class Reviewer {
      * @param changes - List of files changed in the pull request
      * @returns A promise that resolves when all reviews are completed and comments are posted
      */
-    reviewChanges({ prContext, prompts, changes, }: {
+    reviewChanges({ prContext, prompts, changes }: {
         prContext: PullRequestContext;
         prompts: Prompts;
         changes: ChangeFile[];

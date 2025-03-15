@@ -2,16 +2,16 @@ import {
   getBooleanInput,
   getInput,
   getMultilineInput,
-  setFailed,
-} from "@actions/core";
-import { context, getOctokit } from "@actions/github";
-import { Commenter } from "./commenter.js";
-import { PullRequestContext } from "./context.js";
-import { Options } from "./option.js";
-import { parsePatch } from "./patchParser.js";
-import { Prompts } from "./prompts.js";
-import { Reviewer } from "./reviewer.js";
-import type { ChangeFile, FileDiff } from "./types.js";
+  setFailed
+} from "@actions/core"
+import { context, getOctokit } from "@actions/github"
+import { Commenter } from "./commenter.js"
+import { PullRequestContext } from "./context.js"
+import { Options } from "./option.js"
+import { parsePatch } from "./patchParser.js"
+import { Prompts } from "./prompts.js"
+import { Reviewer } from "./reviewer.js"
+import type { ChangeFile, FileDiff } from "./types.js"
 
 /**
  * Retrieves all configuration options from GitHub Actions inputs.
@@ -32,11 +32,11 @@ const getOptions = () => {
     getInput("timeout_ms"),
     getInput("language"),
     getInput("summarize_release_notes"),
-    getInput("release_notes_title"),
-  );
-};
+    getInput("release_notes_title")
+  )
+}
 
-const token = process.env.GITHUB_TOKEN || "";
+const token = process.env.GITHUB_TOKEN || ""
 
 /**
  * Gets the PR context information from GitHub action context.
@@ -46,8 +46,8 @@ const token = process.env.GITHUB_TOKEN || "";
  * @returns Pull request context object with all required PR metadata
  */
 const getPrContext = (): PullRequestContext => {
-  const repo = context.repo;
-  const pull_request = context.payload.pull_request;
+  const repo = context.repo
+  const pull_request = context.payload.pull_request
 
   return new PullRequestContext(
     repo.owner,
@@ -55,9 +55,9 @@ const getPrContext = (): PullRequestContext => {
     repo.repo,
     pull_request?.body || "",
     pull_request?.number || 0,
-    pull_request?.head?.sha,
-  );
-};
+    pull_request?.head?.sha
+  )
+}
 
 /**
  * Fetches and processes the changed files in a pull request.
@@ -70,34 +70,34 @@ const getPrContext = (): PullRequestContext => {
  */
 const getChangedFiles = async (
   options: Options,
-  octokit: ReturnType<typeof getOctokit>,
+  octokit: ReturnType<typeof getOctokit>
 ): Promise<ChangeFile[]> => {
-  const pull_request = context.payload.pull_request;
-  const repo = context.repo;
+  const pull_request = context.payload.pull_request
+  const repo = context.repo
 
   if (!pull_request?.base?.sha) {
-    throw new Error("No commit id found");
+    throw new Error("No commit id found")
   }
 
   const targetBranchDiff = await octokit.rest.repos.compareCommits({
     owner: repo.owner,
     repo: repo.repo,
     base: pull_request.base.sha,
-    head: pull_request.head.sha,
-  });
+    head: pull_request.head.sha
+  })
 
-  const changes: ChangeFile[] = [];
+  const changes: ChangeFile[] = []
 
   if (!targetBranchDiff.data.files) {
-    return changes;
+    return changes
   }
 
   for (const file of targetBranchDiff.data.files) {
     if (!file.patch) {
-      continue;
+      continue
     }
     if (!options.checkPath(file.filename)) {
-      continue;
+      continue
     }
 
     const changeFile: ChangeFile = {
@@ -111,27 +111,27 @@ const getChangedFiles = async (
       patch: file.patch,
       summary: "",
       content: undefined,
-      diff: [],
-    };
+      diff: []
+    }
 
     const results = parsePatch({
       filename: file.filename,
-      patch: file.patch,
-    });
+      patch: file.patch
+    })
 
     for (const result of results) {
       const diff: FileDiff = {
         filename: file.filename,
         from: result.from,
-        to: result.to,
-      };
-      changeFile.diff.push(diff);
+        to: result.to
+      }
+      changeFile.diff.push(diff)
     }
-    changes.push(changeFile);
+    changes.push(changeFile)
   }
 
-  return changes;
-};
+  return changes
+}
 
 /**
  * The main function for the action.
@@ -151,58 +151,58 @@ const getChangedFiles = async (
 export async function run(): Promise<void> {
   try {
     // Load configuration options from action inputs
-    const options = getOptions();
+    const options = getOptions()
 
     // Initialize prompt templates with configured options
-    const prompts = new Prompts(options);
+    const prompts = new Prompts(options)
 
     // replace system prompt with the one from options
     const systemPrompt = prompts.renderTemplate(options.systemPrompt, {
-      language: options.language,
-    });
+      language: options.language
+    })
     // Update the system prompt in options
-    options.systemPrompt = systemPrompt;
+    options.systemPrompt = systemPrompt
 
     // Get pull request context information from GitHub context
-    const prContext = getPrContext();
+    const prContext = getPrContext()
 
     // Create authenticated GitHub API client
-    const octokit = getOctokit(token);
+    const octokit = getOctokit(token)
 
     // Initialize commenter for posting review comments
-    const commenter = new Commenter(options, octokit, prContext);
+    const commenter = new Commenter(options, octokit, prContext)
 
     // Create reviewer instance with GitHub client and options
-    const reviewer = new Reviewer(commenter, options);
+    const reviewer = new Reviewer(commenter, options)
 
     // Fetch files changed in the pull request with diff information
-    const changes = await getChangedFiles(options, octokit);
+    const changes = await getChangedFiles(options, octokit)
 
     if (!options.disableReleaseNotes) {
       // Generate and post a summary of the PR changes
       const summary = await reviewer.summarizeChanges({
         prContext,
         prompts,
-        changes,
-      });
+        changes
+      })
 
       // Update the PR description with the generated summary
-      await commenter.updateDescription(summary);
+      await commenter.updateDescription(summary)
     }
 
     if (options.disableReview) {
-      return;
+      return
     }
     // Review code changes and post feedback comments
     await reviewer.reviewChanges({
       prContext,
       prompts,
-      changes,
-    });
+      changes
+    })
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) {
-      setFailed(error.message);
+      setFailed(error.message)
     }
   }
 }
