@@ -39524,7 +39524,7 @@ class GoogleGenerativeAI {
 }
 
 const defaultModel = "gemini-2.0-flash-lite";
-const apiKey$1 = process.env.GOOGLE_API_KEY || "";
+const apiKey$1 = process.env.GEMINI_API_KEY || "";
 class GeminiClient {
     client;
     model;
