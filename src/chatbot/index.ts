@@ -26,7 +26,7 @@ export interface ChatBot {
 /**
  * Extract the model name from a full model identifier string
  * @param name - Full model identifier in "provider/model" format
- * @returns The model portion of the identifier, or the original string if no provider prefix is found
+ * @returns The model portion of the identifier, or the original string if no provider prefix is found.
  */
 export const getModelName = (name: string): string => {
   const parts = name.split("/")

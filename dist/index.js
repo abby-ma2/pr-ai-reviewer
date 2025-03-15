@@ -45066,7 +45066,7 @@ class OpenAIClient {
 /**
  * Extract the model name from a full model identifier string
  * @param name - Full model identifier in "provider/model" format
- * @returns The model portion of the identifier, or the original string if no provider prefix is found
+ * @returns The model portion of the identifier, or the original string if no provider prefix is found.
  */
 const getModelName = (name) => {
     const parts = name.split("/");
