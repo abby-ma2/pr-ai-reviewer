@@ -201,7 +201,7 @@ inputs:
     description:
       If true, it will also provide the file content as context when review or
       summary.
-    default: "true"
+    default: "false"
   language:
     required: false
     description: ISO code for the response language
