@@ -34,7 +34,8 @@ const getOptions = () => {
     getInput("timeout_ms"),
     getInput("language"),
     getInput("summarize_release_notes"),
-    getInput("release_notes_title")
+    getInput("release_notes_title"),
+    getBooleanInput("use_file_content")
   )
 }
 
