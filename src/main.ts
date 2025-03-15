@@ -35,7 +35,8 @@ const getOptions = () => {
     getInput("language"),
     getInput("summarize_release_notes"),
     getInput("release_notes_title"),
-    getBooleanInput("use_file_content")
+    getBooleanInput("use_file_content"),
+    getInput("custom_review_policy")
   )
 }
 

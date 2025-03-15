@@ -16,6 +16,7 @@ export class Options {
   releaseNotesTitle: string
   useFileContent: boolean
   localAction: boolean
+  reviewPolicy: string
 
   constructor(
     debug: boolean,
@@ -30,7 +31,8 @@ export class Options {
     language: string,
     summarizeReleaseNotes: string,
     releaseNotesTitle: string,
-    useFileContent: boolean
+    useFileContent: boolean,
+    reviewPolicy: string
   ) {
     this.debug = debug
     this.disableReview = disableReview
@@ -46,6 +48,7 @@ export class Options {
     this.releaseNotesTitle = releaseNotesTitle
     this.useFileContent = useFileContent
     this.localAction = process.env.LOCAL_ACTION === "true"
+    this.reviewPolicy = reviewPolicy
   }
 
   /**

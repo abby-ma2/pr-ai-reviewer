@@ -35211,7 +35211,8 @@ class Options {
     releaseNotesTitle;
     useFileContent;
     localAction;
-    constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, summaryModel, model, retries, timeoutMS, language, summarizeReleaseNotes, releaseNotesTitle, useFileContent) {
+    reviewPolicy;
+    constructor(debug, disableReview, disableReleaseNotes, pathFilters, systemPrompt, summaryModel, model, retries, timeoutMS, language, summarizeReleaseNotes, releaseNotesTitle, useFileContent, reviewPolicy) {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
@@ -35226,6 +35227,7 @@ class Options {
         this.releaseNotesTitle = releaseNotesTitle;
         this.useFileContent = useFileContent;
         this.localAction = process.env.LOCAL_ACTION === "true";
+        this.reviewPolicy = reviewPolicy;
     }
     /**
      * Prints all configuration options using core.info for debugging purposes.
@@ -35530,10 +35532,16 @@ $content
 $changeSummary
 \`\`\`
 
+if($reviewPolicy) {
+## Review Policy
+\`\`\`
+$reviewPolicy
+\`\`\`
+}
 ## IMPORTANT Instructions
 
 Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments.
-Additional Context: PR title, description, summaries and comment chains.
+Additional Context: PR title, description, summaries, file content, review policy and comment chains.
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
 Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use example response format below.
 Use fenced code blocks using the relevant language identifier where applicable.
@@ -35729,7 +35737,8 @@ class Prompts {
             filename: diff.filename || "",
             changeSummary: change.summary,
             content: this.options.useFileContent ? change.content || "" : "",
-            patches: renderFileDiffHunk(diff)
+            patches: renderFileDiffHunk(diff),
+            reviewPolicy: this.options.reviewPolicy || ""
         };
         // cache the first prompt
         prompts.push({
@@ -46558,7 +46567,7 @@ const parseReviewComment = (reviewComment) => {
  * @returns Configured Options instance with all action parameters
  */
 const getOptions = () => {
-    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("summary_model"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"), coreExports.getInput("release_notes_title"), coreExports.getBooleanInput("use_file_content"));
+    return new Options(coreExports.getBooleanInput("debug"), coreExports.getBooleanInput("disable_review"), coreExports.getBooleanInput("disable_release_notes"), coreExports.getMultilineInput("path_filters"), coreExports.getInput("system_prompt"), coreExports.getInput("summary_model"), coreExports.getInput("model"), coreExports.getInput("retries"), coreExports.getInput("timeout_ms"), coreExports.getInput("language"), coreExports.getInput("summarize_release_notes"), coreExports.getInput("release_notes_title"), coreExports.getBooleanInput("use_file_content"), coreExports.getInput("custom_review_policy"));
 };
 const token = process.env.GITHUB_TOKEN || "";
 /**

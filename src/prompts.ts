@@ -63,10 +63,16 @@ $content
 $changeSummary
 \`\`\`
 
+if($reviewPolicy) {
+## Review Policy
+\`\`\`
+$reviewPolicy
+\`\`\`
+}
 ## IMPORTANT Instructions
 
 Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments.
-Additional Context: PR title, description, summaries and comment chains.
+Additional Context: PR title, description, summaries, file content, review policy and comment chains.
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
 Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use example response format below.
 Use fenced code blocks using the relevant language identifier where applicable.
@@ -286,7 +292,8 @@ export class Prompts {
       filename: diff.filename || "",
       changeSummary: change.summary,
       content: this.options.useFileContent ? change.content || "" : "",
-      patches: renderFileDiffHunk(diff)
+      patches: renderFileDiffHunk(diff),
+      reviewPolicy: this.options.reviewPolicy || ""
     }
 
     // cache the first prompt

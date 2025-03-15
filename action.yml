@@ -202,6 +202,10 @@ inputs:
       If true, it will also provide the file content as context when review or
       summary.
     default: "false"
+  custom_review_policy:
+    required: false
+    description: "Set the policies for reviewing the modified code."
+    default: ""
   language:
     required: false
     description: ISO code for the response language
