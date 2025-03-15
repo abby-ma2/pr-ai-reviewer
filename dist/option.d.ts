@@ -12,6 +12,7 @@ export declare class Options {
     summarizeReleaseNotes: string;
     releaseNotesTitle: string;
     useFileContent: boolean;
+    localAction: boolean;
     constructor(debug: boolean, disableReview: boolean, disableReleaseNotes: boolean, pathFilters: string[] | null, systemPrompt: string, summaryModel: string, model: string, retries: string, timeoutMS: string, language: string, summarizeReleaseNotes: string, releaseNotesTitle: string, useFileContent: boolean);
     /**
      * Prints all configuration options using core.info for debugging purposes.

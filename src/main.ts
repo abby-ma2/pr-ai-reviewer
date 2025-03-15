@@ -240,8 +240,11 @@ export async function run(): Promise<void> {
       })
 
       debug(`Summary changeset: ${summary}`)
-      // Update the PR description with the generated summary
-      await commenter.updateDescription(summary)
+
+      if (!options.localAction) {
+        // Update the PR description with the generated summary
+        await commenter.updateDescription(summary)
+      }
     }
 
     if (options.disableReview) {

@@ -15,6 +15,7 @@ export class Options {
   summarizeReleaseNotes: string
   releaseNotesTitle: string
   useFileContent: boolean
+  localAction: boolean
 
   constructor(
     debug: boolean,
@@ -44,6 +45,7 @@ export class Options {
     this.summarizeReleaseNotes = summarizeReleaseNotes
     this.releaseNotesTitle = releaseNotesTitle
     this.useFileContent = useFileContent
+    this.localAction = process.env.LOCAL_ACTION === "true"
   }
 
   /**

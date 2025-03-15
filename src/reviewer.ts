@@ -137,7 +137,9 @@ export class Reviewer {
           if (review.isLGTM) {
             continue
           }
-          await this.commenter.createReviewComment(change.filename, review)
+          if (!this.options.localAction) {
+            await this.commenter.createReviewComment(change.filename, review)
+          }
         }
       }
     }
