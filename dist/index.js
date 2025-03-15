@@ -45256,6 +45256,35 @@ const getPrContext = () => {
     return new PullRequestContext(repo.owner, pull_request?.title, repo.repo, pull_request?.body || "", pull_request?.number || 0, pull_request?.head?.sha);
 };
 /**
+ * Fetches the content of a file from GitHub repository.
+ *
+ * @param octokit - GitHub API client instance
+ * @param owner - Repository owner
+ * @param repo - Repository name
+ * @param path - File path
+ * @param ref - Git reference (branch, tag, or commit SHA)
+ * @returns The content of the file as a string or undefined if not found
+ */
+const getFileContent = async (octokit, owner, repo, path, ref) => {
+    try {
+        const response = await octokit.rest.repos.getContent({
+            owner,
+            repo,
+            path,
+            ref
+        });
+        if ("content" in response.data && response.data.content) {
+            // Content is base64 encoded
+            return Buffer.from(response.data.content, "base64").toString();
+        }
+        return undefined;
+    }
+    catch (error) {
+        coreExports.info(`Failed to fetch content for ${path} ${error}`);
+        return undefined;
+    }
+};
+/**
  * Fetches and processes the changed files in a pull request.
  * Retrieves the diff between base and head commits, parses the patch information,
  * and constructs FileDiff objects for each changed section of code.
@@ -45300,6 +45329,11 @@ const getChangedFiles = async (options, octokit) => {
             content: undefined,
             diff: []
         };
+        // Fetch file content from the head commit
+        if (pull_request?.head?.sha) {
+            changeFile.content = await getFileContent(octokit, repo.owner, repo.repo, file.filename, pull_request.head.sha);
+            coreExports.debug(`Fetched content for ${file.filename} from commit ${pull_request.head.sha}\n ${changeFile.content}\n`);
+        }
         const results = parsePatch({
             filename: file.filename,
             patch: file.patch
