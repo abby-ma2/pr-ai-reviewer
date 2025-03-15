@@ -34041,7 +34041,7 @@ class Options {
         coreExports.info(`debug: ${this.debug}`);
         coreExports.info(`disable_review: ${this.disableReview}`);
         coreExports.info(`disable_release_notes: ${this.disableReleaseNotes}`);
-        coreExports.info(`path_filters: ${this.pathFilters.toString()}`);
+        coreExports.info(`path_filters: ${this.pathFilters?.toString()}`);
         coreExports.info(`system_prompt: ${this.systemPrompt}`);
         coreExports.info(`summary_model: ${this.summaryModel}`);
         coreExports.info(`model: ${this.model}`);
@@ -34323,12 +34323,13 @@ const reviewFileDiffPrefix = `
 $description
 \`\`\`
 
+$if(content) {
 ## File Content Data (Ignore if no content data exists.)
 
 \`\`\`
 $content
 \`\`\`
-
+}
 ## Summary of changes
 
 \`\`\`
@@ -34345,13 +34346,6 @@ Use fenced code blocks using the relevant language identifier where applicable.
 Don't annotate code snippets with line numbers. Format and indent code correctly.
 Do not use \`suggestion\` code blocks.
 For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
-
-Consider:
-1. Code quality and adherence to best practices
-2. Potential bugs or edge cases
-3. Performance optimizations
-4. Readability and maintainability
-5. Any security concerns
 
 Suggest improvements and explain your reasoning for each suggestion.
 - Do NOT provide general feedback, summaries, explanations of changes, or praises
@@ -34431,13 +34425,13 @@ const summarizeFileDiffPrefix = `
 \`\`\`
 $description
 \`\`\`
-
+$if(content) {
 ## File Content Data (Ignore if no content data exists.)
 
 \`\`\`
 $content
 \`\`\`
-
+}
 ## Instructions
 Analyze the provided patch format file diff and summarize it according to the following instructions:
 
@@ -34559,6 +34553,7 @@ class Prompts {
     /**
      * Renders a template string by replacing placeholders with provided values.
      * @param template - Template string containing placeholders in the format $key or ${key}
+     *                  and conditional blocks in the format $if(condition){trueContent}$else{falseContent}
      * @param values - Object containing key-value pairs for placeholder replacement
      * @param addFooter - Whether to append the footer to the template (defaults to false)
      * @returns Formatted string with all placeholders replaced and footer appended if requested
@@ -34566,14 +34561,72 @@ class Prompts {
     renderTemplate(template, values, addFooter = false) {
         values.language = this.options.language || "en-US";
         // add footer
+        // Add footer if requested
         let result = addFooter ? `${template}\n\n---\n${this.footer}` : template;
-        for (const [key, value] of Object.entries(values)) {
-            const placeholder1 = `$${key}`;
-            const placeholder2 = `\${${key}}`;
-            result = result.split(placeholder1).join(value);
-            result = result.split(placeholder2).join(value);
-        }
+        let previousResult;
+        do {
+            previousResult = result;
+            // Process conditional blocks
+            // Pattern to match if/else blocks and simple if blocks
+            // Handle if-else blocks
+            // Process if-else blocks first
+            result = result.replace(/\$if\(([^)]+)\){([^{}]*)}\$else{([^{}]*)}/g, (match, condition, trueContent, falseContent) => {
+                try {
+                    if (!/^(?:[a-zA-Z_][a-zA-Z0-9_]*(?:\s*==\s*(?:'[^']*'|"[^"]*"))?)\s*$/.test(condition.trim())) {
+                        return match;
+                    }
+                    return this.evaluateCondition(condition, values)
+                        ? trueContent
+                        : falseContent;
+                }
+                catch (error) {
+                    coreExports.debug(`Error evaluating condition: ${condition}, ${error}`);
+                    return match;
+                }
+            });
+            // Then process simple if blocks
+            result = result.replace(/\$if\(([^)]+)\){([^{}]*)}/g, (match, condition, content) => {
+                try {
+                    // Check if the condition is valid
+                    if (!/^(?:[a-zA-Z_][a-zA-Z0-9_]*(?:\s*==\s*(?:'[^']*'|"[^"]*"))?)\s*$/.test(condition.trim())) {
+                        return match;
+                    }
+                    return this.evaluateCondition(condition, values) ? content : "";
+                }
+                catch (error) {
+                    coreExports.debug(`Error evaluating condition: ${condition}, ${error}`);
+                    return match;
+                }
+            });
+            // Replace variables with both formats
+            for (const [key, value] of Object.entries(values)) {
+                if (value !== undefined) {
+                    const regex1 = new RegExp(`\\$${key}\\b`, "g");
+                    const regex2 = new RegExp(`\\$\\{${key}\\}`, "g");
+                    result = result.replace(regex1, value);
+                    result = result.replace(regex2, value);
+                }
+            }
+        } while (result !== previousResult); // Continue until no more changes are made
         return result;
+    }
+    /**
+     * Evaluates a condition string against provided values
+     * @param condition - Condition string like "key == 'value'" or "key"
+     * @param values - Values to be used in evaluation
+     * @returns Boolean result of condition evaluation
+     */
+    evaluateCondition(condition, values) {
+        const trimmedCondition = condition.trim();
+        if (trimmedCondition.includes("==")) {
+            const [key, valueToCompare] = trimmedCondition
+                .split("==")
+                .map((part) => part.trim());
+            const actualValue = values[key] || "";
+            const expectedValue = valueToCompare.replace(/^["'](.*)["']$/, "$1");
+            return actualValue === expectedValue;
+        }
+        return !!values[trimmedCondition];
     }
     /**
      * Outputs debug information about the current options.
