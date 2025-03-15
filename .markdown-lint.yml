@@ -1,7 +1,5 @@
 # See: https://github.com/DavidAnson/markdownlint
 
-
-
 # Unordered list style
 MD004:
   style: dash
@@ -10,7 +8,7 @@ MD004:
 MD013:
   tables: false
   line_length: 120
-  
+
 # Ordered list item prefix
 MD029:
   style: one
