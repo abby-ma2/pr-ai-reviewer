@@ -13,7 +13,8 @@ export declare class Options {
     releaseNotesTitle: string;
     useFileContent: boolean;
     localAction: boolean;
-    constructor(debug: boolean, disableReview: boolean, disableReleaseNotes: boolean, pathFilters: string[] | null, systemPrompt: string, summaryModel: string, model: string, retries: string, timeoutMS: string, language: string, summarizeReleaseNotes: string, releaseNotesTitle: string, useFileContent: boolean);
+    reviewPolicy: string;
+    constructor(debug: boolean, disableReview: boolean, disableReleaseNotes: boolean, pathFilters: string[] | null, systemPrompt: string, summaryModel: string, model: string, retries: string, timeoutMS: string, language: string, summarizeReleaseNotes: string, releaseNotesTitle: string, useFileContent: boolean, reviewPolicy: string);
     /**
      * Prints all configuration options using core.info for debugging purposes.
      * Displays each option value in the GitHub Actions log.
