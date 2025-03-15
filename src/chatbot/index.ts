@@ -7,6 +7,15 @@ import { GeminiClient } from "./gemini.js"
 import { OpenAIClient } from "./openai.js"
 
 /**
+ * Type providing a message structure for the chatbot.
+ */
+export type Message = {
+  text: string
+  role: "user" | "assistant" | "system"
+  cache?: boolean
+}
+
+/**
  * Interface for chatbot clients that can review code
  */
 export interface ChatBot {
